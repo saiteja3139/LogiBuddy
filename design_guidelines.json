@@ -1,0 +1,145 @@
+{
+  "identity": {
+    "name": "Logistic Swiss",
+    "description": "A high-precision, data-first design system inspired by Swiss International Style but adapted for the vibrant, physical world of Indian logistics. It prioritizes clarity, readability, and speed.",
+    "emotional_tone": "Reliable, Efficient, Authoritative, Kinetic",
+    "archetype": "The Performance Pro",
+    "theme_preference": "light"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold tracking-tight",
+      "h4": "text-xl font-medium tracking-normal",
+      "body": "text-sm md:text-base leading-relaxed",
+      "small": "text-xs font-medium uppercase tracking-wider text-muted-foreground"
+    },
+    "imports": [
+      "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    ]
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#0f172a",
+        "foreground": "#f8fafc",
+        "description": "Deep Slate 900 - The anchor. Used for navigation, primary buttons, and headings."
+      },
+      "secondary": {
+        "DEFAULT": "#f97316",
+        "foreground": "#ffffff",
+        "description": "Vibrant Orange 500 - The kinetic trigger. Used for 'Add New', 'Alerts', and Status indicators."
+      },
+      "accent": {
+        "DEFAULT": "#0ea5e9",
+        "foreground": "#ffffff",
+        "description": "Sky 500 - Information and active states."
+      },
+      "muted": {
+        "DEFAULT": "#f1f5f9",
+        "foreground": "#64748b",
+        "description": "Slate 100/500 - Backgrounds and secondary text."
+      },
+      "background": "#f8fafc",
+      "surface": "#ffffff",
+      "border": "#e2e8f0",
+      "input": "#f1f5f9"
+    },
+    "status": {
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "info": "#3b82f6"
+    }
+  },
+  "layout_strategies": {
+    "dashboard_grid": {
+      "type": "bento",
+      "columns": "grid-cols-1 md:grid-cols-12",
+      "gap": "gap-4 md:gap-6",
+      "rules": "Use dense packing. Summary cards span 2-3 cols. Charts span 6-8 cols. Feed lists span 3-4 cols height-2."
+    },
+    "data_tables": {
+      "style": "dense",
+      "header": "bg-muted/50 text-xs uppercase tracking-wider font-semibold text-muted-foreground sticky top-0 z-10",
+      "row": "hover:bg-muted/50 transition-colors border-b last:border-0",
+      "cell": "py-2 px-4 text-sm whitespace-nowrap"
+    },
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+  },
+  "components": {
+    "card": {
+      "style": "bg-white border border-border/60 shadow-sm rounded-sm",
+      "header": "p-4 border-b border-border/40",
+      "content": "p-4 md:p-6",
+      "hover_effect": "hover:shadow-md hover:border-primary/20 transition-all duration-200"
+    },
+    "button": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm h-9 px-4 py-2 rounded-sm text-sm font-medium uppercase tracking-wide transition-all",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-sm h-9 px-4 py-2 rounded-sm text-sm font-medium transition-all",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 rounded-sm text-sm font-medium transition-all",
+      "ghost": "hover:bg-muted hover:text-foreground h-9 px-2 rounded-sm text-sm font-medium transition-all"
+    },
+    "input": {
+      "style": "flex h-9 w-full rounded-sm border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "badge": {
+      "base": "inline-flex items-center rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+      "outline": "text-foreground"
+    }
+  },
+  "visual_assets": {
+    "images": {
+      "hero_bg": {
+        "url": "https://images.pexels.com/photos/29057949/pexels-photo-29057949.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "alt": "Indian logistics truck on expressway",
+        "usage": "Login page background, Hero section overlay"
+      },
+      "transporter_feature": {
+        "url": "https://images.pexels.com/photos/29057947/pexels-photo-29057947.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "alt": "Vibrant Tata truck",
+        "usage": "Transporter signup or feature card"
+      },
+      "warehouse_ops": {
+        "url": "https://images.pexels.com/photos/6699416/pexels-photo-6699416.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "alt": "Warehouse worker with tablet",
+        "usage": "Staff/Operations dashboard promo or empty state"
+      },
+      "global_logistics": {
+        "url": "https://images.pexels.com/photos/1624695/pexels-photo-1624695.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "alt": "Stacked shipping containers",
+        "usage": "Orders/Shipments section header or report cover"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-width={1.5} size={18}"
+    }
+  },
+  "universal_guidelines": [
+    "Use 'Manrope' for all headings and numbers (prices, dates, IDs).",
+    "Use 'Inter' for body text and long descriptions.",
+    "Do not use rounded-xl or rounded-2xl. Stick to 'rounded-sm' (2px) or 'rounded-md' (4px) for a professional, industrial look.",
+    "Data Density: In tables and lists, minimize padding (py-2) to show more data per screen. Logistics users hate scrolling.",
+    "Contrast: Ensure all text is at least Slate 600 (#475569) on white backgrounds.",
+    "Forms: Use 'shadcn' form components but override with the 'input' style defined above.",
+    "Toasts: Use 'sonner' for all success/error notifications.",
+    "Motion: Add simple 'transition-all duration-200' to buttons and inputs. Use 'framer-motion' for page transitions if possible, but keep it subtle (opacity fade).",
+    "Currency: Always format prices with '₹' and Indian locale (e.g., ₹1,20,000).",
+    "Dates: Use 'dd MMM yyyy' format (e.g., 12 Oct 2025)."
+  ],
+  "instructions_to_main_agent": [
+    "1. Update 'tailwind.config.js' with the colors and font families defined here.",
+    "2. Add the Google Fonts import to 'src/index.css'.",
+    "3. Create a 'Layout' component that uses the 'Manrope' font class for the body wrapper.",
+    "4. When building the Dashboard, follow the 'bento' grid strategy.",
+    "5. Use the provided image URLs for the Login page and key visual areas.",
+    "6. Ensure the 'Card' component in Shadcn is updated to remove large rounded corners and shadows, making it flatter and sharper."
+  ]
+}
