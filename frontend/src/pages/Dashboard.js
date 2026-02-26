@@ -1,0 +1,143 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../lib/api';
+import { formatCurrency } from '../lib/utils';
+import { IndianRupee, TrendingUp, TrendingDown, Package, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { toast } from 'sonner';
+
+export default function Dashboard() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const response = await api.get('/dashboard');
+      setStats(response.data);
+    } catch (error) {
+      toast.error('Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div data-testid="dashboard-loading">Loading dashboard...</div>;
+  }
+
+  return (
+    <div className="space-y-8" data-testid="dashboard">
+      <div>
+        <h1 className="text-4xl font-bold text-foreground font-heading">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">Your logistics overview at a glance</p>
+      </div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+        {/* Outstanding Receivables */}
+        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="receivables-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Receivables
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-success" strokeWidth={1.5} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground font-heading">
+              {formatCurrency(stats?.total_outstanding_receivables || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Outstanding from customers</p>
+          </CardContent>
+        </Card>
+
+        {/* Outstanding Payables */}
+        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="payables-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Payables
+            </CardTitle>
+            <TrendingDown className="h-4 w-4 text-error" strokeWidth={1.5} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground font-heading">
+              {formatCurrency(stats?.total_outstanding_payables || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Due to transporters</p>
+          </CardContent>
+        </Card>
+
+        {/* Pending Orders */}
+        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="pending-orders-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pending Orders
+            </CardTitle>
+            <Package className="h-4 w-4 text-accent" strokeWidth={1.5} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground font-heading">
+              {stats?.pending_orders_count || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Orders with pending qty</p>
+          </CardContent>
+        </Card>
+
+        {/* Overdue Customers */}
+        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="overdue-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Overdue
+            </CardTitle>
+            <AlertTriangle className="h-4 w-4 text-warning" strokeWidth={1.5} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground font-heading">
+              {stats?.overdue_customers_count || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Customers with overdue payments</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link to="/orders">
+          <Card className="cursor-pointer hover:shadow-md hover:border-secondary/20 transition-all duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">View Orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Manage and track all your orders</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/payments">
+          <Card className="cursor-pointer hover:shadow-md hover:border-secondary/20 transition-all duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Manage Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Track receivables and payables</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/reports">
+          <Card className="cursor-pointer hover:shadow-md hover:border-secondary/20 transition-all duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">View Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Generate detailed reports</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+    </div>
+  );
+}
