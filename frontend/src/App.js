@@ -1,52 +1,83 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from './lib/supabase';
+import { Toaster } from './components/ui/sonner';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Customers from './pages/Customers';
+import CustomerDetail from './pages/CustomerDetail';
+import Transporters from './pages/Transporters';
+import TransporterDetail from './pages/TransporterDetail';
+import Trucks from './pages/Trucks';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
+import Trips from './pages/Trips';
+import Payments from './pages/Payments';
+import PaymentDetail from './pages/PaymentDetail';
+import Reports from './pages/Reports';
+import Layout from './components/Layout';
+import './App.css';
 
 function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route
+            path="/*"
+            element={
+              session ? (
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/customers" element={<Customers />} />
+                    <Route path="/customers/:id" element={<CustomerDetail />} />
+                    <Route path="/transporters" element={<Transporters />} />
+                    <Route path="/transporters/:id" element={<TransporterDetail />} />
+                    <Route path="/trucks" element={<Trucks />} />
+                    <Route path="/orders" element={<Orders />} />
+                    <Route path="/orders/:id" element={<OrderDetail />} />
+                    <Route path="/trips" element={<Trips />} />
+                    <Route path="/payments" element={<Payments />} />
+                    <Route path="/payments/:id" element={<PaymentDetail />} />
+                    <Route path="/reports" element={<Reports />} />
+                  </Routes>
+                </Layout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
         </Routes>
       </BrowserRouter>
+      <Toaster position="top-right" />
     </div>
   );
 }
