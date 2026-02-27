@@ -14,6 +14,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [formData, setFormData] = useState({
     customer_id: '',
     origin: '',
