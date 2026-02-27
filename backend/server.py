@@ -16,10 +16,107 @@ import uuid
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Supabase connection
-supabase_url = os.environ['SUPABASE_URL']
-supabase_key = os.environ['SUPABASE_SERVICE_KEY']
-supabase: Client = create_client(supabase_url, supabase_key)
+# DEVELOPMENT MODE: Using in-memory mock database
+# This allows the app to work without Supabase setup
+MOCK_DB = {
+    'customers': [],
+    'transporters': [],
+    'trucks': [],
+    'orders': [],
+    'trips': [],
+    'payments': [],
+    'payment_allocations': []
+}
+
+# Mock Supabase client for development
+class MockSupabase:
+    def table(self, table_name):
+        return MockTable(table_name)
+    
+    class auth:
+        @staticmethod
+        def sign_in_with_password(credentials):
+            raise HTTPException(status_code=501, detail="Auth disabled in demo mode")
+        
+        @staticmethod
+        def sign_out():
+            return {"message": "Logged out"}
+        
+        @staticmethod
+        def get_user(token):
+            return None
+    
+    class storage:
+        @staticmethod
+        def from_(bucket):
+            return MockStorage()
+
+class MockStorage:
+    def upload(self, path, content, options):
+        return {"path": path}
+    
+    def get_public_url(self, path):
+        return f"https://mock-storage.com/{path}"
+
+class MockTable:
+    def __init__(self, table_name):
+        self.table_name = table_name
+        self.query = {}
+        
+    def select(self, columns="*"):
+        self.columns = columns
+        return self
+    
+    def insert(self, data):
+        if not isinstance(data, list):
+            data = [data]
+        for item in data:
+            if 'id' not in item:
+                item['id'] = str(uuid.uuid4())
+            if 'created_at' not in item:
+                item['created_at'] = datetime.now().isoformat()
+            if 'updated_at' not in item:
+                item['updated_at'] = datetime.now().isoformat()
+            MOCK_DB[self.table_name].append(item)
+        return self
+    
+    def update(self, data):
+        self.update_data = data
+        return self
+    
+    def delete(self):
+        return self
+    
+    def eq(self, field, value):
+        self.query[field] = value
+        return self
+    
+    def order(self, field, desc=False):
+        return self
+    
+    def limit(self, n):
+        return self
+    
+    def execute(self):
+        data = MOCK_DB[self.table_name].copy()
+        
+        # Apply filters
+        for field, value in self.query.items():
+            data = [item for item in data if item.get(field) == value]
+        
+        # Apply updates
+        if hasattr(self, 'update_data'):
+            for item in data:
+                item.update(self.update_data)
+                item['updated_at'] = datetime.now().isoformat()
+        
+        class Response:
+            pass
+        response = Response()
+        response.data = data
+        return response
+
+supabase = MockSupabase()
 
 # Create the main app without a prefix
 app = FastAPI()
