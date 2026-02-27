@@ -13,6 +13,7 @@ export default function Transporters() {
   const [filteredTransporters, setFilteredTransporters] = useState([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTransporter, setEditingTransporter] = useState(null);
   const [formData, setFormData] = useState({
     name: '', phone: '', address: '', gstin: '', pan: '',
     bank_account_name: '', bank_account_number: '', ifsc: '', bank_name: ''
