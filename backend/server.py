@@ -118,6 +118,88 @@ class MockTable:
 
 supabase = MockSupabase()
 
+# Add seed data for demo
+MOCK_DB['customers'] = [
+    {
+        'id': '1', 'name': 'ABC Logistics Pvt Ltd', 'phone': '9876543210',
+        'email': 'abc@logistics.com', 'gstin': '27AABCU9603R1ZM',
+        'payment_terms_days': 30, 'address': 'Mumbai, Maharashtra',
+        'notes': None, 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+    {
+        'id': '2', 'name': 'XYZ Industries', 'phone': '9876543211',
+        'email': 'xyz@industries.com', 'gstin': '29AABCU9603R1ZN',
+        'payment_terms_days': 15, 'address': 'Bangalore, Karnataka',
+        'notes': None, 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+]
+
+MOCK_DB['transporters'] = [
+    {
+        'id': '1', 'name': 'Sharma Transports', 'phone': '9988776655',
+        'gstin': '27AAAFS1234F1Z5', 'pan': 'AAAFS1234F',
+        'bank_account_name': 'Rajesh Sharma', 'bank_account_number': '123456789012',
+        'ifsc': 'SBIN0001234', 'bank_name': 'State Bank of India',
+        'address': 'Delhi', 'is_deleted': False,
+        'kyc_pan_url': None, 'kyc_aadhaar_url': None, 'kyc_rc_url': None,
+        'kyc_insurance_url': None, 'kyc_permit_url': None,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+]
+
+MOCK_DB['trucks'] = [
+    {
+        'id': '1', 'transporter_id': '1', 'truck_number': 'MH02AB1234',
+        'truck_type': 'Closed Container', 'capacity_mt': 20.0,
+        'rc_expiry_date': '2026-12-31', 'insurance_expiry_date': '2026-06-30',
+        'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+]
+
+MOCK_DB['orders'] = [
+    {
+        'id': '1', 'order_number': 'ORD-2025-001', 'customer_id': '1',
+        'origin': 'Mumbai', 'destination': 'Pune', 'material': 'Steel Coils',
+        'total_qty_mt': 100.0, 'rate_type': 'PER_MT', 'customer_rate_value': 5000.0,
+        'order_date': '2025-01-15', 'expected_end_date': None, 'status': 'ACTIVE',
+        'is_deleted': False,
+        'created_at': '2025-01-15T00:00:00', 'updated_at': '2025-01-15T00:00:00'
+    },
+]
+
+MOCK_DB['trips'] = [
+    {
+        'id': '1', 'trip_number': 'TRP-2025-001', 'order_id': '1',
+        'transporter_id': '1', 'truck_id': '1',
+        'trip_date': '2025-01-16', 'delivered_date': '2025-01-17',
+        'qty_mt': 20.0, 'payable_amount': 85000.0, 'customer_bill_amount': 100000.0,
+        'status': 'DELIVERED', 'lr_copy_url': None, 'pod_url': None,
+        'is_deleted': False,
+        'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-17T00:00:00'
+    },
+]
+
+MOCK_DB['payments'] = [
+    {
+        'id': '1', 'payment_direction': 'RECEIVED', 'party_type': 'CUSTOMER',
+        'party_id': '1', 'amount': 100000.0, 'payment_date': '2025-01-25',
+        'mode': 'NEFT', 'reference': 'UTR123456789', 'notes': None,
+        'is_deleted': False,
+        'created_at': '2025-01-25T00:00:00', 'updated_at': '2025-01-25T00:00:00'
+    },
+]
+
+MOCK_DB['payment_allocations'] = [
+    {
+        'id': '1', 'payment_id': '1', 'allocate_to_type': 'TRIP',
+        'allocate_to_id': '1', 'allocated_amount': 100000.0,
+        'created_at': '2025-01-25T00:00:00', 'updated_at': '2025-01-25T00:00:00'
+    },
+]
+
 # Create the main app without a prefix
 app = FastAPI()
 
