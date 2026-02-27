@@ -144,7 +144,7 @@ export default function Transporters() {
                   <Input value={formData.bank_name} onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })} />
                 </div>
               </div>
-              <Button type="submit" className="w-full">Create Transporter</Button>
+              <Button type="submit" className="w-full">{editingTransporter ? 'Update Transporter' : 'Create Transporter'}</Button>
             </form>
           </DialogContent>
         </Dialog>
