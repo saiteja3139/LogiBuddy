@@ -62,6 +62,7 @@ class MockTable:
     def __init__(self, table_name):
         self.table_name = table_name
         self.query = {}
+        self.in_queries = {}
         
     def select(self, columns="*"):
         self.columns = columns
@@ -91,6 +92,13 @@ class MockTable:
         self.query[field] = value
         return self
     
+    def in_(self, field, values):
+        self.in_queries[field] = values
+        return self
+    
+    def or_(self, condition):
+        return self
+    
     def order(self, field, desc=False):
         return self
     
@@ -103,6 +111,10 @@ class MockTable:
         # Apply filters
         for field, value in self.query.items():
             data = [item for item in data if item.get(field) == value]
+        
+        # Apply in_ filters
+        for field, values in self.in_queries.items():
+            data = [item for item in data if item.get(field) in values]
         
         # Apply updates
         if hasattr(self, 'update_data'):
