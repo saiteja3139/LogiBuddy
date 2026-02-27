@@ -53,9 +53,15 @@ export default function Orders() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/orders', formData);
-      toast.success('Order created successfully');
+      if (editingOrder) {
+        await api.put(`/orders/${editingOrder.id}`, formData);
+        toast.success('Order updated successfully');
+      } else {
+        await api.post('/orders', formData);
+        toast.success('Order created successfully');
+      }
       setDialogOpen(false);
+      setEditingOrder(null);
       setFormData({
         customer_id: '', origin: '', destination: '', material: '',
         total_qty_mt: 0, rate_type: 'PER_MT', customer_rate_value: 0,
@@ -63,7 +69,25 @@ export default function Orders() {
       });
       fetchOrders();
     } catch (error) {
-      toast.error('Failed to create order');
+      toast.error(editingOrder ? 'Failed to update order' : 'Failed to create order');
+    }
+  };
+
+  const handleEdit = (order) => {
+    setEditingOrder(order);
+    setFormData(order);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this order?')) {
+      try {
+        await api.delete(`/orders/${id}`);
+        toast.success('Order deleted successfully');
+        fetchOrders();
+      } catch (error) {
+        toast.error('Failed to delete order');
+      }
     }
   };
 
