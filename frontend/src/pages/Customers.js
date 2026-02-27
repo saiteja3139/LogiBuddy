@@ -94,7 +94,13 @@ export default function Customers() {
           <h1 className="text-4xl font-bold text-foreground font-heading">Customers</h1>
           <p className="text-muted-foreground mt-2">Manage your customer database</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingCustomer(null);
+            setFormData({ name: '', phone: '', email: '', address: '', gstin: '', payment_terms_days: 0, notes: '' });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="add-customer-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -103,7 +109,7 @@ export default function Customers() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
