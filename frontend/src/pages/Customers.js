@@ -13,6 +13,7 @@ export default function Customers() {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
