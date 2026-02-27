@@ -499,31 +499,31 @@ async def get_customers(search: Optional[str] = None):
     return result.data
 
 @api_router.post("/customers", response_model=CustomerResponse)
-async def create_customer(customer: CustomerCreate, user = Depends(verify_token)):
+async def create_customer(customer: CustomerCreate):
     result = supabase.table("customers").insert(customer.model_dump()).execute()
     return result.data[0]
 
 @api_router.get("/customers/{customer_id}", response_model=CustomerResponse)
-async def get_customer(customer_id: str, user = Depends(verify_token)):
+async def get_customer(customer_id: str):
     result = supabase.table("customers").select("*").eq("id", customer_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Customer not found")
     return result.data[0]
 
 @api_router.put("/customers/{customer_id}", response_model=CustomerResponse)
-async def update_customer(customer_id: str, customer: CustomerCreate, user = Depends(verify_token)):
+async def update_customer(customer_id: str, customer: CustomerCreate):
     result = supabase.table("customers").update(customer.model_dump()).eq("id", customer_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Customer not found")
     return result.data[0]
 
 @api_router.delete("/customers/{customer_id}")
-async def delete_customer(customer_id: str, user = Depends(verify_token)):
+async def delete_customer(customer_id: str):
     result = supabase.table("customers").update({"is_deleted": True}).eq("id", customer_id).execute()
     return {"message": "Customer deleted successfully"}
 
 @api_router.get("/customers/{customer_id}/detail")
-async def get_customer_detail(customer_id: str, user = Depends(verify_token)):
+async def get_customer_detail(customer_id: str):
     customer = supabase.table("customers").select("*").eq("id", customer_id).execute()
     if not customer.data:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -581,7 +581,7 @@ async def get_customer_detail(customer_id: str, user = Depends(verify_token)):
 
 # Transporter endpoints
 @api_router.get("/transporters", response_model=List[TransporterResponse])
-async def get_transporters(search: Optional[str] = None, user = Depends(verify_token)):
+async def get_transporters(search: Optional[str] = None):
     query = supabase.table("transporters").select("*").eq("is_deleted", False).order("created_at", desc=True)
     
     if search:
@@ -591,31 +591,31 @@ async def get_transporters(search: Optional[str] = None, user = Depends(verify_t
     return result.data
 
 @api_router.post("/transporters", response_model=TransporterResponse)
-async def create_transporter(transporter: TransporterCreate, user = Depends(verify_token)):
+async def create_transporter(transporter: TransporterCreate):
     result = supabase.table("transporters").insert(transporter.model_dump()).execute()
     return result.data[0]
 
 @api_router.get("/transporters/{transporter_id}", response_model=TransporterResponse)
-async def get_transporter(transporter_id: str, user = Depends(verify_token)):
+async def get_transporter(transporter_id: str):
     result = supabase.table("transporters").select("*").eq("id", transporter_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Transporter not found")
     return result.data[0]
 
 @api_router.put("/transporters/{transporter_id}", response_model=TransporterResponse)
-async def update_transporter(transporter_id: str, transporter: TransporterCreate, user = Depends(verify_token)):
+async def update_transporter(transporter_id: str, transporter: TransporterCreate):
     result = supabase.table("transporters").update(transporter.model_dump()).eq("id", transporter_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Transporter not found")
     return result.data[0]
 
 @api_router.delete("/transporters/{transporter_id}")
-async def delete_transporter(transporter_id: str, user = Depends(verify_token)):
+async def delete_transporter(transporter_id: str):
     result = supabase.table("transporters").update({"is_deleted": True}).eq("id", transporter_id).execute()
     return {"message": "Transporter deleted successfully"}
 
 @api_router.get("/transporters/{transporter_id}/detail")
-async def get_transporter_detail(transporter_id: str, user = Depends(verify_token)):
+async def get_transporter_detail(transporter_id: str):
     transporter = supabase.table("transporters").select("*").eq("id", transporter_id).execute()
     if not transporter.data:
         raise HTTPException(status_code=404, detail="Transporter not found")
@@ -652,7 +652,7 @@ async def get_transporter_detail(transporter_id: str, user = Depends(verify_toke
 
 # Truck endpoints
 @api_router.get("/trucks", response_model=List[TruckResponse])
-async def get_trucks(transporter_id: Optional[str] = None, user = Depends(verify_token)):
+async def get_trucks(transporter_id: Optional[str] = None):
     query = supabase.table("trucks").select("*").eq("is_deleted", False).order("created_at", desc=True)
     
     if transporter_id:
@@ -662,26 +662,26 @@ async def get_trucks(transporter_id: Optional[str] = None, user = Depends(verify
     return result.data
 
 @api_router.post("/trucks", response_model=TruckResponse)
-async def create_truck(truck: TruckCreate, user = Depends(verify_token)):
+async def create_truck(truck: TruckCreate):
     result = supabase.table("trucks").insert(truck.model_dump()).execute()
     return result.data[0]
 
 @api_router.get("/trucks/{truck_id}", response_model=TruckResponse)
-async def get_truck(truck_id: str, user = Depends(verify_token)):
+async def get_truck(truck_id: str):
     result = supabase.table("trucks").select("*").eq("id", truck_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Truck not found")
     return result.data[0]
 
 @api_router.put("/trucks/{truck_id}", response_model=TruckResponse)
-async def update_truck(truck_id: str, truck: TruckCreate, user = Depends(verify_token)):
+async def update_truck(truck_id: str, truck: TruckCreate):
     result = supabase.table("trucks").update(truck.model_dump()).eq("id", truck_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Truck not found")
     return result.data[0]
 
 @api_router.delete("/trucks/{truck_id}")
-async def delete_truck(truck_id: str, user = Depends(verify_token)):
+async def delete_truck(truck_id: str):
     result = supabase.table("trucks").update({"is_deleted": True}).eq("id", truck_id).execute()
     return {"message": "Truck deleted successfully"}
 
@@ -690,7 +690,7 @@ def generate_order_number():
     return f"ORD-{datetime.now().year}-{str(uuid.uuid4())[:8].upper()}"
 
 @api_router.get("/orders", response_model=List[OrderResponse])
-async def get_orders(customer_id: Optional[str] = None, status: Optional[OrderStatus] = None, user = Depends(verify_token)):
+async def get_orders(customer_id: Optional[str] = None, status: Optional[OrderStatus] = None):
     query = supabase.table("orders").select("*").eq("is_deleted", False).order("created_at", desc=True)
     
     if customer_id:
@@ -710,7 +710,7 @@ async def get_orders(customer_id: Optional[str] = None, status: Optional[OrderSt
     return result.data
 
 @api_router.post("/orders", response_model=OrderResponse)
-async def create_order(order: OrderCreate, user = Depends(verify_token)):
+async def create_order(order: OrderCreate):
     order_data = order.model_dump()
     order_data["order_number"] = generate_order_number()
     result = supabase.table("orders").insert(order_data).execute()
@@ -720,7 +720,7 @@ async def create_order(order: OrderCreate, user = Depends(verify_token)):
     return response
 
 @api_router.get("/orders/{order_id}", response_model=OrderResponse)
-async def get_order(order_id: str, user = Depends(verify_token)):
+async def get_order(order_id: str):
     result = supabase.table("orders").select("*").eq("id", order_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -734,7 +734,7 @@ async def get_order(order_id: str, user = Depends(verify_token)):
     return order
 
 @api_router.put("/orders/{order_id}", response_model=OrderResponse)
-async def update_order(order_id: str, order: OrderCreate, user = Depends(verify_token)):
+async def update_order(order_id: str, order: OrderCreate):
     result = supabase.table("orders").update(order.model_dump()).eq("id", order_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -748,12 +748,12 @@ async def update_order(order_id: str, order: OrderCreate, user = Depends(verify_
     return response
 
 @api_router.delete("/orders/{order_id}")
-async def delete_order(order_id: str, user = Depends(verify_token)):
+async def delete_order(order_id: str):
     result = supabase.table("orders").update({"is_deleted": True}).eq("id", order_id).execute()
     return {"message": "Order deleted successfully"}
 
 @api_router.get("/orders/{order_id}/detail")
-async def get_order_detail(order_id: str, user = Depends(verify_token)):
+async def get_order_detail(order_id: str):
     order = supabase.table("orders").select("*").eq("id", order_id).execute()
     if not order.data:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -775,7 +775,7 @@ def generate_trip_number():
     return f"TRP-{datetime.now().year}-{str(uuid.uuid4())[:8].upper()}"
 
 @api_router.get("/trips", response_model=List[TripResponse])
-async def get_trips(order_id: Optional[str] = None, transporter_id: Optional[str] = None, status: Optional[TripStatus] = None, user = Depends(verify_token)):
+async def get_trips(order_id: Optional[str] = None, transporter_id: Optional[str] = None, status: Optional[TripStatus] = None):
     query = supabase.table("trips").select("*").eq("is_deleted", False).order("created_at", desc=True)
     
     if order_id:
@@ -789,34 +789,34 @@ async def get_trips(order_id: Optional[str] = None, transporter_id: Optional[str
     return result.data
 
 @api_router.post("/trips", response_model=TripResponse)
-async def create_trip(trip: TripCreate, user = Depends(verify_token)):
+async def create_trip(trip: TripCreate):
     trip_data = trip.model_dump()
     trip_data["trip_number"] = generate_trip_number()
     result = supabase.table("trips").insert(trip_data).execute()
     return result.data[0]
 
 @api_router.get("/trips/{trip_id}", response_model=TripResponse)
-async def get_trip(trip_id: str, user = Depends(verify_token)):
+async def get_trip(trip_id: str):
     result = supabase.table("trips").select("*").eq("id", trip_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Trip not found")
     return result.data[0]
 
 @api_router.put("/trips/{trip_id}", response_model=TripResponse)
-async def update_trip(trip_id: str, trip: TripCreate, user = Depends(verify_token)):
+async def update_trip(trip_id: str, trip: TripCreate):
     result = supabase.table("trips").update(trip.model_dump()).eq("id", trip_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Trip not found")
     return result.data[0]
 
 @api_router.delete("/trips/{trip_id}")
-async def delete_trip(trip_id: str, user = Depends(verify_token)):
+async def delete_trip(trip_id: str):
     result = supabase.table("trips").update({"is_deleted": True}).eq("id", trip_id).execute()
     return {"message": "Trip deleted successfully"}
 
 # Payment endpoints
 @api_router.get("/payments", response_model=List[PaymentResponse])
-async def get_payments(party_type: Optional[PartyType] = None, party_id: Optional[str] = None, user = Depends(verify_token)):
+async def get_payments(party_type: Optional[PartyType] = None, party_id: Optional[str] = None):
     query = supabase.table("payments").select("*").eq("is_deleted", False).order("created_at", desc=True)
     
     if party_type:
@@ -835,14 +835,14 @@ async def get_payments(party_type: Optional[PartyType] = None, party_id: Optiona
     return result.data
 
 @api_router.post("/payments", response_model=PaymentResponse)
-async def create_payment(payment: PaymentCreate, user = Depends(verify_token)):
+async def create_payment(payment: PaymentCreate):
     result = supabase.table("payments").insert(payment.model_dump()).execute()
     response = result.data[0]
     response["unallocated_amount"] = float(response["amount"])
     return response
 
 @api_router.get("/payments/{payment_id}", response_model=PaymentResponse)
-async def get_payment(payment_id: str, user = Depends(verify_token)):
+async def get_payment(payment_id: str):
     result = supabase.table("payments").select("*").eq("id", payment_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -855,18 +855,18 @@ async def get_payment(payment_id: str, user = Depends(verify_token)):
     return payment
 
 @api_router.delete("/payments/{payment_id}")
-async def delete_payment(payment_id: str, user = Depends(verify_token)):
+async def delete_payment(payment_id: str):
     result = supabase.table("payments").update({"is_deleted": True}).eq("id", payment_id).execute()
     return {"message": "Payment deleted successfully"}
 
 # Payment Allocation endpoints
 @api_router.get("/payments/{payment_id}/allocations", response_model=List[AllocationResponse])
-async def get_payment_allocations(payment_id: str, user = Depends(verify_token)):
+async def get_payment_allocations(payment_id: str):
     result = supabase.table("payment_allocations").select("*").eq("payment_id", payment_id).execute()
     return result.data
 
 @api_router.post("/payments/{payment_id}/allocations", response_model=AllocationResponse)
-async def create_allocation(payment_id: str, allocation: AllocationCreate, user = Depends(verify_token)):
+async def create_allocation(payment_id: str, allocation: AllocationCreate):
     # Validate payment exists
     payment = supabase.table("payments").select("amount").eq("id", payment_id).execute()
     if not payment.data:
@@ -885,7 +885,7 @@ async def create_allocation(payment_id: str, allocation: AllocationCreate, user 
     return result.data[0]
 
 @api_router.delete("/allocations/{allocation_id}")
-async def delete_allocation(allocation_id: str, user = Depends(verify_token)):
+async def delete_allocation(allocation_id: str):
     result = supabase.table("payment_allocations").delete().eq("id", allocation_id).execute()
     return {"message": "Allocation deleted successfully"}
 
@@ -949,7 +949,7 @@ async def get_dashboard(user = Depends(verify_token)):
 
 # Upload endpoint
 @api_router.post("/upload")
-async def upload_file(file: UploadFile = File(...), folder: str = Form("documents"), user = Depends(verify_token)):
+async def upload_file(file: UploadFile = File(...), folder: str = Form("documents")):
     try:
         file_content = await file.read()
         file_name = f"{folder}/{uuid.uuid4()}_{file.filename}"
