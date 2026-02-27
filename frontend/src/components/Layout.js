@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Truck, Package, Route, CreditCard, 
-  FileText, Menu, X, LogOut, User
+  FileText, Menu, X, User
 } from 'lucide-react';
-import { Button } from './ui/button';
-import { toast } from 'sonner';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
