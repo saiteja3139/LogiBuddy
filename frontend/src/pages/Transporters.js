@@ -88,7 +88,13 @@ export default function Transporters() {
           <h1 className="text-4xl font-bold font-heading">Transporters</h1>
           <p className="text-muted-foreground mt-2">Manage your transporter network</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingTransporter(null);
+            setFormData({ name: '', phone: '', address: '', gstin: '', pan: '', bank_account_name: '', bank_account_number: '', ifsc: '', bank_name: '' });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="add-transporter-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -97,7 +103,7 @@ export default function Transporters() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Transporter</DialogTitle>
+              <DialogTitle>{editingTransporter ? 'Edit Transporter' : 'Add New Transporter'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
