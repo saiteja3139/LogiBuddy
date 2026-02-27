@@ -47,13 +47,37 @@ export default function Transporters() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/transporters', formData);
-      toast.success('Transporter created successfully');
+      if (editingTransporter) {
+        await api.put(`/transporters/${editingTransporter.id}`, formData);
+        toast.success('Transporter updated successfully');
+      } else {
+        await api.post('/transporters', formData);
+        toast.success('Transporter created successfully');
+      }
       setDialogOpen(false);
+      setEditingTransporter(null);
       setFormData({ name: '', phone: '', address: '', gstin: '', pan: '', bank_account_name: '', bank_account_number: '', ifsc: '', bank_name: '' });
       fetchTransporters();
     } catch (error) {
-      toast.error('Failed to create transporter');
+      toast.error(editingTransporter ? 'Failed to update transporter' : 'Failed to create transporter');
+    }
+  };
+
+  const handleEdit = (transporter) => {
+    setEditingTransporter(transporter);
+    setFormData(transporter);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this transporter?')) {
+      try {
+        await api.delete(`/transporters/${id}`);
+        toast.success('Transporter deleted successfully');
+        fetchTransporters();
+      } catch (error) {
+        toast.error('Failed to delete transporter');
+      }
     }
   };
 
