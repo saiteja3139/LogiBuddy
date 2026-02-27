@@ -176,7 +176,7 @@ export default function Customers() {
                   />
                 </div>
               </div>
-              <Button type="submit" data-testid="customer-submit-btn" className="w-full">Create Customer</Button>
+              <Button type="submit" data-testid="customer-submit-btn" className="w-full">{editingCustomer ? 'Update Customer' : 'Create Customer'}</Button>
             </form>
           </DialogContent>
         </Dialog>
