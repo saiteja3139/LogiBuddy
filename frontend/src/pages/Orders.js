@@ -186,7 +186,7 @@ export default function Orders() {
                   </Select>
                 </div>
               </div>
-              <Button type="submit" className="w-full">Create Order</Button>
+              <Button type="submit" className="w-full">{editingOrder ? 'Update Order' : 'Create Order'}</Button>
             </form>
           </DialogContent>
         </Dialog>
