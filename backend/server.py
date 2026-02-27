@@ -439,14 +439,19 @@ class DashboardStats(BaseModel):
     overdue_customers_count: int
 
 # Helper function to verify auth token - BYPASSED FOR DEVELOPMENT
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # Return a mock user for development
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Return a mock user for development - no authentication required
     class MockUser:
         class User:
             id = "dev-user-123"
             email = "dev@example.com"
         user = User()
     return MockUser()
+
+# Make auth optional for all endpoints
+from typing import Optional
+async def optional_auth(authorization: Optional[str] = None):
+    return {"user_id": "demo-user"}
 
 # Auth endpoints
 @api_router.post("/auth/login", response_model=LoginResponse)
