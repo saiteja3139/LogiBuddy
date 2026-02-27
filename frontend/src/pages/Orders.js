@@ -98,7 +98,17 @@ export default function Orders() {
           <h1 className="text-4xl font-bold font-heading">Orders</h1>
           <p className="text-muted-foreground mt-2">Manage customer orders</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingOrder(null);
+            setFormData({
+              customer_id: '', origin: '', destination: '', material: '',
+              total_qty_mt: 0, rate_type: 'PER_MT', customer_rate_value: 0,
+              order_date: new Date().toISOString().split('T')[0], status: 'DRAFT'
+            });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="add-order-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -107,7 +117,7 @@ export default function Orders() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Order</DialogTitle>
+              <DialogTitle>{editingOrder ? 'Edit Order' : 'Add New Order'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
