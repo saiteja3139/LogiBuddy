@@ -74,15 +74,10 @@ export default function Layout({ children }) {
 
           {/* User section */}
           <div className="p-4 border-t border-primary-foreground/10">
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              data-testid="logout-btn"
-              className="w-full justify-start text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-            >
-              <LogOut className="w-5 h-5 mr-3" strokeWidth={1.5} />
-              Logout
-            </Button>
+            <div className="flex items-center space-x-2 text-primary-foreground px-3 py-2">
+              <User className="w-5 h-5" />
+              <span className="text-sm">Demo Mode</span>
+            </div>
           </div>
         </div>
       </div>
