@@ -175,6 +175,12 @@ export default function Transporters() {
                   <Link to={`/transporters/${t.id}`}>
                     <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
                   </Link>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(t)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)}>
+                    <Trash2 className="w-4 h-4 text-error" />
+                  </Button>
                 </td>
               </tr>
             ))}
