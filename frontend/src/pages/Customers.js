@@ -221,6 +221,12 @@ export default function Customers() {
                       <Eye className="w-4 h-4" />
                     </Button>
                   </Link>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(customer)} data-testid="edit-customer-btn">
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)} data-testid="delete-customer-btn">
+                    <Trash2 className="w-4 h-4 text-error" />
+                  </Button>
                 </td>
               </tr>
             ))}
