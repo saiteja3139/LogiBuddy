@@ -489,7 +489,7 @@ async def get_session(user = Depends(verify_token)):
 
 # Customer endpoints
 @api_router.get("/customers", response_model=List[CustomerResponse])
-async def get_customers(search: Optional[str] = None, user = Depends(verify_token)):
+async def get_customers(search: Optional[str] = None):
     query = supabase.table("customers").select("*").eq("is_deleted", False).order("created_at", desc=True)
     
     if search:
