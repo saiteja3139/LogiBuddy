@@ -53,13 +53,37 @@ export default function Customers() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/customers', formData);
-      toast.success('Customer created successfully');
+      if (editingCustomer) {
+        await api.put(`/customers/${editingCustomer.id}`, formData);
+        toast.success('Customer updated successfully');
+      } else {
+        await api.post('/customers', formData);
+        toast.success('Customer created successfully');
+      }
       setDialogOpen(false);
+      setEditingCustomer(null);
       setFormData({ name: '', phone: '', email: '', address: '', gstin: '', payment_terms_days: 0, notes: '' });
       fetchCustomers();
     } catch (error) {
-      toast.error('Failed to create customer');
+      toast.error(editingCustomer ? 'Failed to update customer' : 'Failed to create customer');
+    }
+  };
+
+  const handleEdit = (customer) => {
+    setEditingCustomer(customer);
+    setFormData(customer);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      try {
+        await api.delete(`/customers/${id}`);
+        toast.success('Customer deleted successfully');
+        fetchCustomers();
+      } catch (error) {
+        toast.error('Failed to delete customer');
+      }
     }
   };
 
