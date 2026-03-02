@@ -10,6 +10,7 @@ import TruckDetail from './pages/TruckDetail';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Trips from './pages/Trips';
+import TripDetail from './pages/TripDetail';
 import Payments from './pages/Payments';
 import PaymentDetail from './pages/PaymentDetail';
 import Reports from './pages/Reports';
@@ -34,6 +35,7 @@ function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/trips" element={<Trips />} />
+            <Route path="/trips/:id" element={<TripDetail />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/payments/:id" element={<PaymentDetail />} />
             <Route path="/drivers" element={<Drivers />} />

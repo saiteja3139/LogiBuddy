@@ -170,6 +170,7 @@ export default function OrderDetail() {
                   <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Payable</th>
                   <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Status</th>
                   <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Date</th>
+                  <th className="py-2 px-4 text-right text-xs uppercase font-semibold text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -190,6 +191,13 @@ export default function OrderDetail() {
                       </span>
                     </td>
                     <td className="py-2 px-4 text-sm">{formatDate(trip.trip_date)}</td>
+                    <td className="py-2 px-4 text-sm text-right">
+                      <Link to={`/trips/${trip.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

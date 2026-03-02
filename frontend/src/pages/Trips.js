@@ -254,6 +254,11 @@ export default function Trips() {
                 </td>
                 <td className="py-2 px-4 text-sm">{formatDate(trip.trip_date)}</td>
                 <td className="py-2 px-4 text-sm text-right space-x-2">
+                  <Link to={`/trips/${trip.id}`}>
+                    <Button variant="ghost" size="sm">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </Link>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(trip)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
