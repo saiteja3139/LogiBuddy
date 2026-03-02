@@ -25,7 +25,9 @@ MOCK_DB = {
     'orders': [],
     'trips': [],
     'payments': [],
-    'payment_allocations': []
+    'payment_allocations': [],
+    'drivers': [],
+    'documents': []
 }
 
 # Mock Supabase client for development
@@ -212,6 +214,66 @@ MOCK_DB['payment_allocations'] = [
     },
 ]
 
+# Add seed data for drivers
+MOCK_DB['drivers'] = [
+    {
+        'id': '1', 'transporter_id': '1', 'name': 'Rajesh Kumar', 'phone': '9876543220',
+        'license_number': 'DL1420110012345', 'license_expiry_date': '2026-12-31',
+        'address': 'Delhi', 'notes': 'Experienced driver', 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+    {
+        'id': '2', 'transporter_id': '1', 'name': 'Amit Singh', 'phone': '9876543221',
+        'license_number': 'MH0220110054321', 'license_expiry_date': '2025-06-30',
+        'address': 'Mumbai', 'notes': None, 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+]
+
+# Add seed data for documents
+MOCK_DB['documents'] = [
+    {
+        'id': '1', 'doc_type': 'KYC', 'entity_type': 'TRANSPORTER', 'entity_id': '1',
+        'title': 'PAN Card', 'file_name': 'pan_card.pdf', 
+        'file_path': 'kyc_docs/transporter/1/pan_card.pdf',
+        'file_url': 'https://mock-storage.com/pan_card.pdf',
+        'mime_type': 'application/pdf', 'file_size': 102400,
+        'issue_date': '2020-01-15', 'expiry_date': None, 'notes': None,
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+    {
+        'id': '2', 'doc_type': 'VEHICLE', 'entity_type': 'TRUCK', 'entity_id': '1',
+        'title': 'RC Book', 'file_name': 'rc_book.pdf',
+        'file_path': 'vehicle_docs/truck/1/rc_book.pdf',
+        'file_url': 'https://mock-storage.com/rc_book.pdf',
+        'mime_type': 'application/pdf', 'file_size': 204800,
+        'issue_date': '2020-03-20', 'expiry_date': '2026-12-31', 'notes': 'Valid RC',
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+    {
+        'id': '3', 'doc_type': 'DRIVER', 'entity_type': 'DRIVER', 'entity_id': '1',
+        'title': 'Driving License', 'file_name': 'dl_front.jpg',
+        'file_path': 'driver_docs/driver/1/dl_front.jpg',
+        'file_url': 'https://mock-storage.com/dl_front.jpg',
+        'mime_type': 'image/jpeg', 'file_size': 512000,
+        'issue_date': '2021-01-10', 'expiry_date': '2026-12-31', 'notes': 'Heavy vehicle license',
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+    },
+    {
+        'id': '4', 'doc_type': 'TRIP', 'entity_type': 'TRIP', 'entity_id': '1',
+        'title': 'POD Image', 'file_name': 'pod_delivered.jpg',
+        'file_path': 'trip_docs/trip/1/pod_delivered.jpg',
+        'file_url': 'https://mock-storage.com/pod_delivered.jpg',
+        'mime_type': 'image/jpeg', 'file_size': 768000,
+        'issue_date': '2025-01-17', 'expiry_date': None, 'notes': 'Delivery proof',
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
+    },
+]
+
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -260,6 +322,18 @@ class PaymentMode(str, Enum):
 class AllocateToType(str, Enum):
     TRIP = "TRIP"
     ORDER = "ORDER"
+
+class DocType(str, Enum):
+    KYC = "KYC"
+    VEHICLE = "VEHICLE"
+    DRIVER = "DRIVER"
+    TRIP = "TRIP"
+
+class EntityType(str, Enum):
+    TRANSPORTER = "TRANSPORTER"
+    TRUCK = "TRUCK"
+    DRIVER = "DRIVER"
+    TRIP = "TRIP"
 
 # Auth Models
 class LoginRequest(BaseModel):
@@ -442,6 +516,62 @@ class AllocationResponse(BaseModel):
     allocate_to_id: str
     allocated_amount: float
     created_at: datetime
+
+# Driver Models
+class DriverCreate(BaseModel):
+    transporter_id: Optional[str] = None
+    name: str
+    phone: str
+    license_number: Optional[str] = None
+    license_expiry_date: Optional[date] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+
+class DriverResponse(BaseModel):
+    id: str
+    transporter_id: Optional[str]
+    name: str
+    phone: str
+    license_number: Optional[str]
+    license_expiry_date: Optional[date]
+    address: Optional[str]
+    notes: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+# Document Models
+class DocumentCreate(BaseModel):
+    doc_type: DocType
+    entity_type: EntityType
+    entity_id: str
+    title: str
+    file_name: str
+    file_path: str
+    file_url: Optional[str] = None
+    mime_type: str
+    file_size: int
+    issue_date: Optional[date] = None
+    expiry_date: Optional[date] = None
+    notes: Optional[str] = None
+
+class DocumentResponse(BaseModel):
+    id: str
+    doc_type: DocType
+    entity_type: EntityType
+    entity_id: str
+    title: str
+    file_name: str
+    file_path: str
+    file_url: Optional[str]
+    mime_type: str
+    file_size: int
+    issue_date: Optional[date]
+    expiry_date: Optional[date]
+    notes: Optional[str]
+    uploaded_by: Optional[str]
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
 
 # Dashboard Models
 class DashboardStats(BaseModel):
@@ -1059,6 +1189,247 @@ async def get_order_summary_report(user = Depends(verify_token)):
         })
     
     return report
+
+# Driver endpoints
+@api_router.get("/drivers", response_model=List[DriverResponse])
+async def get_drivers(transporter_id: Optional[str] = None, search: Optional[str] = None):
+    query = supabase.table("drivers").select("*").eq("is_deleted", False).order("created_at", desc=True)
+    
+    if transporter_id:
+        query = query.eq("transporter_id", transporter_id)
+    
+    result = query.execute()
+    
+    if search:
+        result.data = [d for d in result.data if search.lower() in d['name'].lower() or search in d['phone']]
+    
+    return result.data
+
+@api_router.post("/drivers", response_model=DriverResponse)
+async def create_driver(driver: DriverCreate):
+    result = supabase.table("drivers").insert(driver.model_dump()).execute()
+    return result.data[0]
+
+@api_router.get("/drivers/{driver_id}", response_model=DriverResponse)
+async def get_driver(driver_id: str):
+    result = supabase.table("drivers").select("*").eq("id", driver_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Driver not found")
+    return result.data[0]
+
+@api_router.put("/drivers/{driver_id}", response_model=DriverResponse)
+async def update_driver(driver_id: str, driver: DriverCreate):
+    result = supabase.table("drivers").update(driver.model_dump()).eq("id", driver_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Driver not found")
+    return result.data[0]
+
+@api_router.delete("/drivers/{driver_id}")
+async def delete_driver(driver_id: str):
+    result = supabase.table("drivers").update({"is_deleted": True}).eq("id", driver_id).execute()
+    return {"message": "Driver deleted successfully"}
+
+@api_router.get("/drivers/{driver_id}/detail")
+async def get_driver_detail(driver_id: str):
+    driver = supabase.table("drivers").select("*").eq("id", driver_id).execute()
+    if not driver.data:
+        raise HTTPException(status_code=404, detail="Driver not found")
+    
+    # Get documents
+    documents = supabase.table("documents").select("*").eq("entity_type", "DRIVER").eq("entity_id", driver_id).eq("is_deleted", False).execute()
+    
+    # Get trips (if trips have driver_id - would need schema update for this)
+    # For now, return empty trips list
+    trips = []
+    
+    return {
+        "driver": driver.data[0],
+        "documents": documents.data,
+        "trips": trips
+    }
+
+# Document endpoints
+@api_router.get("/documents", response_model=List[DocumentResponse])
+async def get_documents(
+    entity_type: Optional[EntityType] = None,
+    entity_id: Optional[str] = None,
+    doc_type: Optional[DocType] = None
+):
+    query = supabase.table("documents").select("*").eq("is_deleted", False).order("created_at", desc=True)
+    
+    if entity_type:
+        query = query.eq("entity_type", entity_type.value)
+    if entity_id:
+        query = query.eq("entity_id", entity_id)
+    if doc_type:
+        query = query.eq("doc_type", doc_type.value)
+    
+    result = query.execute()
+    return result.data
+
+@api_router.post("/documents", response_model=DocumentResponse)
+async def create_document(document: DocumentCreate):
+    doc_data = document.model_dump()
+    doc_data['uploaded_by'] = 'demo-user'  # In real app, get from auth
+    result = supabase.table("documents").insert(doc_data).execute()
+    return result.data[0]
+
+@api_router.get("/documents/{document_id}", response_model=DocumentResponse)
+async def get_document(document_id: str):
+    result = supabase.table("documents").select("*").eq("id", document_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return result.data[0]
+
+@api_router.put("/documents/{document_id}", response_model=DocumentResponse)
+async def update_document(document_id: str, document: DocumentCreate):
+    result = supabase.table("documents").update(document.model_dump()).eq("id", document_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return result.data[0]
+
+@api_router.delete("/documents/{document_id}")
+async def delete_document(document_id: str):
+    result = supabase.table("documents").update({"is_deleted": True}).eq("id", document_id).execute()
+    return {"message": "Document deleted successfully"}
+
+# Document upload endpoint
+@api_router.post("/upload/document")
+async def upload_document(
+    file: UploadFile = File(...),
+    doc_type: str = Form(...),
+    entity_type: str = Form(...),
+    entity_id: str = Form(...),
+    title: str = Form(...),
+    issue_date: Optional[str] = Form(None),
+    expiry_date: Optional[str] = Form(None),
+    notes: Optional[str] = Form(None)
+):
+    try:
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"File type {file.content_type} not allowed")
+        
+        # Validate file size (10MB max)
+        file_content = await file.read()
+        file_size = len(file_content)
+        if file_size > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+        
+        # Determine bucket based on doc_type
+        bucket_map = {
+            'KYC': 'kyc_docs',
+            'VEHICLE': 'vehicle_docs',
+            'DRIVER': 'driver_docs',
+            'TRIP': 'trip_docs'
+        }
+        bucket = bucket_map.get(doc_type, 'documents')
+        
+        # Create folder path based on entity
+        folder_map = {
+            'TRANSPORTER': 'transporter',
+            'TRUCK': 'truck',
+            'DRIVER': 'driver',
+            'TRIP': 'trip'
+        }
+        folder = folder_map.get(entity_type, 'other')
+        
+        # Create file path
+        file_extension = file.filename.split('.')[-1]
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = f"{bucket}/{folder}/{entity_id}/{unique_filename}"
+        
+        # Upload to storage
+        storage_result = supabase.storage.from_(bucket).upload(file_path, file_content, {"content-type": file.content_type})
+        
+        # Get public/signed URL
+        file_url = supabase.storage.from_(bucket).get_public_url(file_path)
+        
+        # Create document record
+        doc_data = {
+            'doc_type': doc_type,
+            'entity_type': entity_type,
+            'entity_id': entity_id,
+            'title': title,
+            'file_name': file.filename,
+            'file_path': file_path,
+            'file_url': file_url,
+            'mime_type': file.content_type,
+            'file_size': file_size,
+            'issue_date': issue_date,
+            'expiry_date': expiry_date,
+            'notes': notes,
+            'uploaded_by': 'demo-user'
+        }
+        
+        result = supabase.table("documents").insert(doc_data).execute()
+        
+        return {
+            "message": "Document uploaded successfully",
+            "document": result.data[0]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+# Get signed URL for document
+@api_router.get("/documents/{document_id}/signed-url")
+async def get_document_signed_url(document_id: str):
+    try:
+        # Get document from DB
+        result = supabase.table("documents").select("*").eq("id", document_id).execute()
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        document = result.data[0]
+        
+        # Determine bucket from doc_type
+        bucket_map = {
+            'KYC': 'kyc_docs',
+            'VEHICLE': 'vehicle_docs',
+            'DRIVER': 'driver_docs',
+            'TRIP': 'trip_docs'
+        }
+        bucket = bucket_map.get(document['doc_type'], 'documents')
+        
+        # Generate signed URL (valid for 1 hour)
+        signed_url = supabase.storage.from_(bucket).create_signed_url(document['file_path'], 3600)
+        
+        return {
+            "signed_url": signed_url,
+            "file_name": document['file_name'],
+            "mime_type": document['mime_type']
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate signed URL: {str(e)}")
+
+# Get expiring documents
+@api_router.get("/documents/expiring/soon")
+async def get_expiring_documents(days: int = 30):
+    today = datetime.now().date()
+    future_date = today + timedelta(days=days)
+    
+    all_docs = supabase.table("documents").select("*").eq("is_deleted", False).execute()
+    
+    expiring = []
+    expired = []
+    
+    for doc in all_docs.data:
+        if doc.get('expiry_date'):
+            expiry = datetime.fromisoformat(str(doc['expiry_date'])).date() if isinstance(doc['expiry_date'], str) else doc['expiry_date']
+            
+            if expiry < today:
+                expired.append(doc)
+            elif expiry <= future_date:
+                expiring.append(doc)
+    
+    return {
+        "expiring_soon": expiring,
+        "expired": expired,
+        "total_expiring": len(expiring),
+        "total_expired": len(expired)
+    }
 
 # Include the router in the main app
 app.include_router(api_router)

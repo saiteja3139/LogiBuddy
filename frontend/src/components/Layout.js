@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Truck, Package, Route, CreditCard, 
-  FileText, Menu, X, User
+  FileText, Menu, X, User, UserCog
 } from 'lucide-react';
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Transporters', href: '/transporters', icon: Truck },
   { name: 'Trucks', href: '/trucks', icon: Truck },
+  { name: 'Drivers', href: '/drivers', icon: UserCog },
   { name: 'Orders', href: '/orders', icon: Package },
   { name: 'Trips', href: '/trips', icon: Route },
   { name: 'Payments', href: '/payments', icon: CreditCard },

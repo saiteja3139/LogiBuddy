@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Trucks() {
@@ -172,6 +173,9 @@ export default function Trucks() {
                 <td className="py-2 px-4 text-sm">{truck.truck_type || '-'}</td>
                 <td className="py-2 px-4 text-sm">{truck.capacity_mt ? `${truck.capacity_mt} MT` : '-'}</td>
                 <td className="py-2 px-4 text-sm text-right space-x-2">
+                  <Link to={`/trucks/${truck.id}`}>
+                    <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
+                  </Link>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(truck)} data-testid="edit-truck-btn">
                     <Pencil className="w-4 h-4" />
                   </Button>

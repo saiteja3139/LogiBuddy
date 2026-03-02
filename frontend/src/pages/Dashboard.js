@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatDate } from '../lib/utils';
 import { IndianRupee, TrendingUp, TrendingDown, Package, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+  const [expiringDocs, setExpiringDocs] = useState({ expiring_soon: [], expired: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboard();
+    fetchExpiringDocuments();
   }, []);
 
   const fetchDashboard = async () => {
@@ -22,6 +24,15 @@ export default function Dashboard() {
       toast.error('Failed to load dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchExpiringDocuments = async () => {
+    try {
+      const response = await api.get('/documents/expiring/soon?days=30');
+      setExpiringDocs(response.data);
+    } catch (error) {
+      console.error('Failed to load expiring documents');
     }
   };
 
@@ -102,6 +113,46 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Expiring Documents Alert */}
+      {(expiringDocs.expiring_soon.length > 0 || expiringDocs.expired.length > 0) && (
+        <Card className="border-warning">
+          <CardHeader>
+            <CardTitle className="text-warning flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Document Alerts</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {expiringDocs.expired.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-error mb-2">Expired Documents ({expiringDocs.expired.length})</h3>
+                <div className="space-y-2">
+                  {expiringDocs.expired.slice(0, 3).map(doc => (
+                    <div key={doc.id} className="text-sm flex justify-between items-center p-2 bg-error/5 rounded-sm">
+                      <span>{doc.title} - {doc.entity_type}</span>
+                      <span className="text-xs text-error">{formatDate(doc.expiry_date)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {expiringDocs.expiring_soon.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-warning mb-2">Expiring Soon ({expiringDocs.expiring_soon.length})</h3>
+                <div className="space-y-2">
+                  {expiringDocs.expiring_soon.slice(0, 3).map(doc => (
+                    <div key={doc.id} className="text-sm flex justify-between items-center p-2 bg-warning/5 rounded-sm">
+                      <span>{doc.title} - {doc.entity_type}</span>
+                      <span className="text-xs text-warning">{formatDate(doc.expiry_date)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

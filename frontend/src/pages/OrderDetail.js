@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import DocumentList from '../components/DocumentList';
 
 export default function OrderDetail() {
   const { id } = useParams();
