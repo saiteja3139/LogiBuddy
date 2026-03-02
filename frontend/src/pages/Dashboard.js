@@ -41,16 +41,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8" data-testid="dashboard">
+    <div className="space-y-6 md:space-y-8" data-testid="dashboard">
       <div>
-        <h1 className="text-4xl font-bold text-foreground font-heading">Dashboard</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground font-heading">Dashboard</h1>
         <p className="text-muted-foreground mt-2">Your logistics overview at a glance</p>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+      {/* Metrics Grid - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Outstanding Receivables */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="receivables-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="receivables-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Receivables
@@ -66,7 +66,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Outstanding Payables */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="payables-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="payables-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Payables
@@ -82,7 +82,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Pending Orders */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="pending-orders-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="pending-orders-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Pending Orders
@@ -98,7 +98,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Overdue Customers */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="overdue-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="overdue-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Overdue

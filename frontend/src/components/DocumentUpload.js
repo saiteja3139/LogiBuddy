@@ -130,7 +130,7 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
           Upload Document
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
         </DialogHeader>
@@ -195,8 +195,8 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="col-span-full sm:col-span-2">
               <Label htmlFor="title">Document Title *</Label>
               <Input
                 id="title"
@@ -224,7 +224,7 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
               />
             </div>
-            <div className="col-span-2">
+            <div className="col-span-full sm:col-span-2">
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"

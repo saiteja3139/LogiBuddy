@@ -92,7 +92,7 @@ export default function DocumentList({ docType, entityType, entityId, title = "D
 
   return (
     <Card data-testid="document-list">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <CardTitle>{title}</CardTitle>
         <DocumentUpload
           docType={docType}
@@ -107,7 +107,7 @@ export default function DocumentList({ docType, entityType, entityId, title = "D
             No documents uploaded yet
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {documents.map((doc) => (
               <div
                 key={doc.id}

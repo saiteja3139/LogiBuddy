@@ -88,10 +88,10 @@ export default function Customers() {
   };
 
   return (
-    <div className="space-y-6" data-testid="customers-page">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 md:space-y-6" data-testid="customers-page">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-foreground font-heading">Customers</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground font-heading">Customers</h1>
           <p className="text-muted-foreground mt-2">Manage your customer database</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -183,7 +183,7 @@ export default function Customers() {
       </div>
 
       <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Search by name or phone..."
@@ -195,7 +195,8 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="bg-white border border-border shadow-sm rounded-sm overflow-hidden">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white border border-border shadow-sm rounded-sm overflow-hidden">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted/50">
             <tr>
@@ -232,6 +233,50 @@ export default function Customers() {
             ))}
           </tbody>
         </table>
+        {filteredCustomers.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">No customers found</div>
+        )}
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {filteredCustomers.map((customer) => (
+          <div key={customer.id} className="bg-white border rounded-sm p-4 shadow-sm" data-testid="customer-card">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="font-medium text-base">{customer.name}</h3>
+                <p className="text-sm text-muted-foreground">{customer.phone}</p>
+              </div>
+              <div className="flex space-x-1">
+                <Link to={`/customers/${customer.id}`}>
+                  <Button variant="ghost" size="sm" className="touch-target">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(customer)} className="touch-target">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)} className="touch-target">
+                  <Trash2 className="w-4 h-4 text-error" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-muted-foreground">Email:</span>
+                <p className="truncate">{customer.email || '-'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">GSTIN:</span>
+                <p className="truncate">{customer.gstin || '-'}</p>
+              </div>
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Payment Terms:</span>
+                <p>{customer.payment_terms_days} days</p>
+              </div>
+            </div>
+          </div>
+        ))}
         {filteredCustomers.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">No customers found</div>
         )}

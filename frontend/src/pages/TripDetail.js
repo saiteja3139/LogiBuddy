@@ -53,16 +53,16 @@ export default function TripDetail() {
   const marginPercent = ((margin / parseFloat(trip.customer_bill_amount)) * 100).toFixed(2);
 
   return (
-    <div className="space-y-6" data-testid="trip-detail-page">
-      <div className="flex items-center space-x-4">
+    <div className="space-y-4 md:space-y-6" data-testid="trip-detail-page">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
         <Link to="/trips">
           <Button variant="outline" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
         </Link>
-        <div>
-          <h1 className="text-4xl font-bold font-heading">{trip.trip_number}</h1>
+        <div className="flex-1">
+          <h1 className="text-3xl sm:text-4xl font-bold font-heading">{trip.trip_number}</h1>
           <p className="text-muted-foreground mt-1">
             <span className={`px-2 py-1 rounded-sm text-xs font-medium ${
               trip.status === 'DELIVERED' ? 'bg-success/10 text-success' :
@@ -76,7 +76,7 @@ export default function TripDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Quantity</CardTitle>
@@ -112,7 +112,7 @@ export default function TripDetail() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Trip Information</CardTitle>
