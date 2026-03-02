@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Upload, X, FileText, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 
@@ -24,14 +24,12 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
   const handleFileChange = (selectedFile) => {
     if (!selectedFile) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedTypes.includes(selectedFile.type)) {
       toast.error('Only JPG, PNG, WEBP, and PDF files are allowed');
       return;
     }
 
-    // Validate file size (10MB)
     if (selectedFile.size > 10 * 1024 * 1024) {
       toast.error('File size must be less than 10MB');
       return;
@@ -39,7 +37,6 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
 
     setFile(selectedFile);
 
-    // Create preview for images
     if (selectedFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -133,12 +130,11 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
           Upload Document
         </Button>
       </DialogTrigger>
-      <DialogContent className=\"max-w-2xl max-h-[90vh] overflow-y-auto\">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className=\"space-y-4\">
-          {/* File Upload Area */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -149,102 +145,101 @@ export default function DocumentUpload({ docType, entityType, entityId, onSucces
             }`}
           >
             {!file ? (
-              <div className=\"space-y-4\">
-                <div className=\"flex justify-center\">
-                  <Upload className=\"w-12 h-12 text-muted-foreground\" />
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <Upload className="w-12 h-12 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className=\"text-sm font-medium\">Drag and drop your file here, or</p>
-                  <label htmlFor=\"file-upload\" className=\"cursor-pointer\">
-                    <span className=\"text-sm text-secondary hover:underline\">browse to upload</span>
+                  <p className="text-sm font-medium">Drag and drop your file here, or</p>
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <span className="text-sm text-secondary hover:underline">browse to upload</span>
                     <input
-                      id=\"file-upload\"
-                      type=\"file\"
-                      className=\"hidden\"
-                      accept=\"image/jpeg,image/png,image/webp,application/pdf\"
+                      id="file-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
                       onChange={(e) => handleFileChange(e.target.files[0])}
                     />
                   </label>
                 </div>
-                <p className=\"text-xs text-muted-foreground\">JPG, PNG, WEBP, or PDF (max 10MB)</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, or PDF (max 10MB)</p>
               </div>
             ) : (
-              <div className=\"space-y-4\">
-                <div className=\"flex items-center justify-center\">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center">
                   {filePreview ? (
-                    <img src={filePreview} alt=\"Preview\" className=\"max-h-32 rounded-sm\" />
+                    <img src={filePreview} alt="Preview" className="max-h-32 rounded-sm" />
                   ) : (
-                    <FileText className=\"w-16 h-16 text-muted-foreground\" />
+                    <FileText className="w-16 h-16 text-muted-foreground" />
                   )}
                 </div>
                 <div>
-                  <p className=\"text-sm font-medium\">{file.name}</p>
-                  <p className=\"text-xs text-muted-foreground\">
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
                 <Button
-                  type=\"button\"
-                  variant=\"outline\"
-                  size=\"sm\"
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setFile(null);
                     setFilePreview(null);
                   }}
                 >
-                  <X className=\"w-4 h-4 mr-2\" />
+                  <X className="w-4 h-4 mr-2" />
                   Remove
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Form Fields */}
-          <div className=\"grid grid-cols-2 gap-4\">
-            <div className=\"col-span-2\">
-              <Label htmlFor=\"title\">Document Title *</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <Label htmlFor="title">Document Title *</Label>
               <Input
-                id=\"title\"
+                id="title"
                 required
-                placeholder=\"e.g., PAN Card, RC Book, Driving License\"
+                placeholder="e.g., PAN Card, RC Book, Driving License"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
             <div>
-              <Label htmlFor=\"issue_date\">Issue Date</Label>
+              <Label htmlFor="issue_date">Issue Date</Label>
               <Input
-                id=\"issue_date\"
-                type=\"date\"
+                id="issue_date"
+                type="date"
                 value={formData.issue_date}
                 onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
               />
             </div>
             <div>
-              <Label htmlFor=\"expiry_date\">Expiry Date</Label>
+              <Label htmlFor="expiry_date">Expiry Date</Label>
               <Input
-                id=\"expiry_date\"
-                type=\"date\"
+                id="expiry_date"
+                type="date"
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
               />
             </div>
-            <div className=\"col-span-2\">
-              <Label htmlFor=\"notes\">Notes</Label>
+            <div className="col-span-2">
+              <Label htmlFor="notes">Notes</Label>
               <Textarea
-                id=\"notes\"
-                placeholder=\"Any additional notes...\"
+                id="notes"
+                placeholder="Any additional notes..."
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               />
             </div>
           </div>
 
-          <div className=\"flex justify-end space-x-2\">
-            <Button type=\"button\" variant=\"outline\" onClick={() => handleClose(false)}>
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => handleClose(false)}>
               Cancel
             </Button>
-            <Button type=\"submit\" disabled={uploading || !file}>
+            <Button type="submit" disabled={uploading || !file}>
               {uploading ? 'Uploading...' : 'Upload Document'}
             </Button>
           </div>
