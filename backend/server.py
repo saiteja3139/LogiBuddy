@@ -1695,6 +1695,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Health check endpoint (for Railway)
+@app.get("/api/health")
+async def health_check():
+    return {"status": "healthy", "database": "supabase" if USE_REAL_SUPABASE else "mock"}
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
