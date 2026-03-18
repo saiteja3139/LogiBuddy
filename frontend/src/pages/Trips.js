@@ -3,12 +3,21 @@ import { Link } from 'react-router-dom';
 import api from '../lib/api';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+
+const WORKFLOW_STEPS = {
+  'LR_CREATION': { label: 'LR Creation', color: 'bg-blue-100 text-blue-800' },
+  'DOCUMENT_VERIFICATION': { label: 'Doc Verification', color: 'bg-yellow-100 text-yellow-800' },
+  'TRIP_ADVANCES': { label: 'Trip Advances', color: 'bg-purple-100 text-purple-800' },
+  'POD_UPLOAD': { label: 'POD Upload', color: 'bg-orange-100 text-orange-800' },
+  'COMPLETED': { label: 'Completed', color: 'bg-green-100 text-green-800' },
+};
 
 export default function Trips() {
   const [trips, setTrips] = useState([]);
@@ -69,11 +78,17 @@ export default function Trips() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Clean up empty string dates to null for backend validation
+      const submitData = {
+        ...formData,
+        delivered_date: formData.delivered_date || null
+      };
+      
       if (editingTrip) {
-        await api.put(`/trips/${editingTrip.id}`, formData);
+        await api.put(`/trips/${editingTrip.id}`, submitData);
         toast.success('Trip updated successfully');
       } else {
-        await api.post('/trips', formData);
+        await api.post('/trips', submitData);
         toast.success('Trip created successfully');
       }
       setDialogOpen(false);
@@ -226,11 +241,12 @@ export default function Trips() {
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted/50">
             <tr>
-              <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Trip #</th>
+              <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">LR / Trip #</th>
               <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Order</th>
               <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Truck</th>
               <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Qty (MT)</th>
               <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Status</th>
+              <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">LR Step</th>
               <th className="py-2 px-4 text-left text-xs uppercase font-semibold text-muted-foreground">Date</th>
               <th className="py-2 px-4 text-right text-xs uppercase font-semibold text-muted-foreground">Actions</th>
             </tr>
@@ -238,7 +254,15 @@ export default function Trips() {
           <tbody className="divide-y divide-border">
             {trips.map((trip) => (
               <tr key={trip.id} className="hover:bg-muted/50 transition-colors" data-testid="trip-row">
-                <td className="py-2 px-4 text-sm font-medium">{trip.trip_number}</td>
+                <td className="py-2 px-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-sm font-medium">{trip.lr_number || trip.trip_number}</div>
+                      {trip.lr_number && <div className="text-xs text-muted-foreground">{trip.trip_number}</div>}
+                    </div>
+                  </div>
+                </td>
                 <td className="py-2 px-4 text-sm">{getOrderNumber(trip.order_id)}</td>
                 <td className="py-2 px-4 text-sm">{getTruckNumber(trip.truck_id)}</td>
                 <td className="py-2 px-4 text-sm">{trip.qty_mt}</td>
@@ -251,6 +275,15 @@ export default function Trips() {
                   }`}>
                     {trip.status}
                   </span>
+                </td>
+                <td className="py-2 px-4 text-sm">
+                  {trip.lr_workflow_step && WORKFLOW_STEPS[trip.lr_workflow_step] ? (
+                    <Badge variant="outline" className={WORKFLOW_STEPS[trip.lr_workflow_step].color}>
+                      {WORKFLOW_STEPS[trip.lr_workflow_step].label}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-gray-100 text-gray-600">Pending</Badge>
+                  )}
                 </td>
                 <td className="py-2 px-4 text-sm">{formatDate(trip.trip_date)}</td>
                 <td className="py-2 px-4 text-sm text-right space-x-2">

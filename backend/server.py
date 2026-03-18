@@ -73,6 +73,7 @@ class MockTable:
     def insert(self, data):
         if not isinstance(data, list):
             data = [data]
+        inserted_items = []
         for item in data:
             if 'id' not in item:
                 item['id'] = str(uuid.uuid4())
@@ -81,6 +82,8 @@ class MockTable:
             if 'updated_at' not in item:
                 item['updated_at'] = datetime.now().isoformat()
             MOCK_DB[self.table_name].append(item)
+            inserted_items.append(item)
+        self._inserted_data = inserted_items
         return self
     
     def update(self, data):
@@ -108,6 +111,14 @@ class MockTable:
         return self
     
     def execute(self):
+        # If we just inserted, return the inserted data
+        if hasattr(self, '_inserted_data'):
+            class Response:
+                pass
+            response = Response()
+            response.data = self._inserted_data
+            return response
+        
         data = MOCK_DB[self.table_name].copy()
         
         # Apply filters
@@ -186,11 +197,28 @@ MOCK_DB['orders'] = [
 
 MOCK_DB['trips'] = [
     {
-        'id': '1', 'trip_number': 'TRP-2025-001', 'order_id': '1',
-        'transporter_id': '1', 'truck_id': '1',
+        'id': '1', 'trip_number': 'TRP-2025-001', 'lr_number': 'LR-2025-000001',
+        'order_id': '1', 'transporter_id': '1', 'truck_id': '1', 'driver_id': '1',
         'trip_date': '2025-01-16', 'delivered_date': '2025-01-17',
         'qty_mt': 20.0, 'payable_amount': 85000.0, 'customer_bill_amount': 100000.0,
         'status': 'DELIVERED', 'lr_copy_url': None, 'pod_url': None,
+        # LR/Consignment Details
+        'loading_date': '2025-01-16T10:00:00', 'description_of_goods': 'Steel Coils',
+        'gross_weight_mt': 21.5, 'tare_weight_mt': 1.5, 'net_weight_mt': 20.0,
+        # Invoice Details
+        'eway_bill': '192345678901234', 'seal_number': 'SEAL-001', 'invoice_number': 'INV-2025-001',
+        # Basic Details
+        'dc_oa': 'DC-001', 'gp_do': 'GP-001',
+        'consignor_name': 'ABC Steel Works', 'consignor_address': 'Industrial Area, Mumbai',
+        'consignee_name': 'XYZ Manufacturing', 'consignee_address': 'MIDC, Pune',
+        # Billing Entity
+        'billing_pan': 'AAAFS1234F', 'billing_name': 'Sharma Transports',
+        'tds_category': '194C', 'tds_status': 'APPROVED',
+        # Vendor Bill
+        'base_freight': 85000.0, 'additionals': 2000.0, 'deductibles': 500.0,
+        'advance_paid': 50000.0, 'outstanding_amount': 36500.0,
+        # Workflow
+        'lr_workflow_step': 'TRIP_ADVANCES',
         'is_deleted': False,
         'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-17T00:00:00'
     },
@@ -272,6 +300,36 @@ MOCK_DB['documents'] = [
         'uploaded_by': 'demo-user', 'is_deleted': False,
         'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
     },
+    {
+        'id': '5', 'doc_type': 'LR', 'entity_type': 'TRIP', 'entity_id': '1',
+        'title': 'Lorry Receipt Copy', 'file_name': 'lr_copy.pdf',
+        'file_path': 'trip_docs/trip/1/lr_copy.pdf',
+        'file_url': 'https://mock-storage.com/lr_copy.pdf',
+        'mime_type': 'application/pdf', 'file_size': 256000,
+        'issue_date': '2025-01-16', 'expiry_date': None, 'notes': 'Original LR document',
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-16T00:00:00'
+    },
+    {
+        'id': '6', 'doc_type': 'INVOICE', 'entity_type': 'TRIP', 'entity_id': '1',
+        'title': 'Trip Invoice', 'file_name': 'invoice_001.pdf',
+        'file_path': 'trip_docs/trip/1/invoice_001.pdf',
+        'file_url': 'https://mock-storage.com/invoice_001.pdf',
+        'mime_type': 'application/pdf', 'file_size': 128000,
+        'issue_date': '2025-01-16', 'expiry_date': None, 'notes': 'Customer invoice',
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-16T00:00:00'
+    },
+    {
+        'id': '7', 'doc_type': 'POD', 'entity_type': 'TRIP', 'entity_id': '1',
+        'title': 'Proof of Delivery', 'file_name': 'pod_signed.jpg',
+        'file_path': 'trip_docs/trip/1/pod_signed.jpg',
+        'file_url': 'https://mock-storage.com/pod_signed.jpg',
+        'mime_type': 'image/jpeg', 'file_size': 512000,
+        'issue_date': '2025-01-17', 'expiry_date': None, 'notes': 'Signed POD from customer',
+        'uploaded_by': 'demo-user', 'is_deleted': False,
+        'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
+    },
 ]
 
 # Create the main app without a prefix
@@ -298,6 +356,18 @@ class TripStatus(str, Enum):
     IN_TRANSIT = "IN_TRANSIT"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
+
+class LRWorkflowStep(str, Enum):
+    LR_CREATION = "LR_CREATION"
+    DOCUMENT_VERIFICATION = "DOCUMENT_VERIFICATION"
+    TRIP_ADVANCES = "TRIP_ADVANCES"
+    POD_UPLOAD = "POD_UPLOAD"
+    COMPLETED = "COMPLETED"
+
+class TDSStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 class RateType(str, Enum):
     PER_MT = "PER_MT"
@@ -328,6 +398,9 @@ class DocType(str, Enum):
     VEHICLE = "VEHICLE"
     DRIVER = "DRIVER"
     TRIP = "TRIP"
+    LR = "LR"
+    INVOICE = "INVOICE"
+    POD = "POD"
 
 class EntityType(str, Enum):
     TRANSPORTER = "TRANSPORTER"
@@ -454,27 +527,89 @@ class TripCreate(BaseModel):
     order_id: str
     transporter_id: str
     truck_id: str
+    driver_id: Optional[str] = None
     trip_date: date
     delivered_date: Optional[date] = None
     qty_mt: float
     payable_amount: float
     customer_bill_amount: float
     status: TripStatus = TripStatus.PLANNED
+    # LR/Consignment Details
+    loading_date: Optional[datetime] = None
+    description_of_goods: Optional[str] = None
+    gross_weight_mt: Optional[float] = None
+    tare_weight_mt: Optional[float] = None
+    net_weight_mt: Optional[float] = None
+    # Invoice Details
+    eway_bill: Optional[str] = None
+    seal_number: Optional[str] = None
+    invoice_number: Optional[str] = None
+    # Basic Details
+    dc_oa: Optional[str] = None  # DC/OA number
+    gp_do: Optional[str] = None  # GP/DO number
+    consignor_name: Optional[str] = None
+    consignor_address: Optional[str] = None
+    consignee_name: Optional[str] = None
+    consignee_address: Optional[str] = None
+    # Billing Entity (Transporter's billing info)
+    billing_pan: Optional[str] = None
+    billing_name: Optional[str] = None
+    tds_category: Optional[str] = None
+    tds_status: Optional[TDSStatus] = TDSStatus.PENDING
+    # Vendor Bill (Simplified)
+    base_freight: Optional[float] = None
+    additionals: Optional[float] = 0
+    deductibles: Optional[float] = 0
+    advance_paid: Optional[float] = 0
+    # LR Workflow
+    lr_workflow_step: Optional[LRWorkflowStep] = LRWorkflowStep.LR_CREATION
 
 class TripResponse(BaseModel):
     id: str
     trip_number: str
+    lr_number: Optional[str] = None
     order_id: str
     transporter_id: str
     truck_id: str
+    driver_id: Optional[str] = None
     trip_date: date
     delivered_date: Optional[date]
     qty_mt: float
     payable_amount: float
     customer_bill_amount: float
     status: TripStatus
-    lr_copy_url: Optional[str]
-    pod_url: Optional[str]
+    lr_copy_url: Optional[str] = None
+    pod_url: Optional[str] = None
+    # LR/Consignment Details
+    loading_date: Optional[datetime] = None
+    description_of_goods: Optional[str] = None
+    gross_weight_mt: Optional[float] = None
+    tare_weight_mt: Optional[float] = None
+    net_weight_mt: Optional[float] = None
+    # Invoice Details
+    eway_bill: Optional[str] = None
+    seal_number: Optional[str] = None
+    invoice_number: Optional[str] = None
+    # Basic Details
+    dc_oa: Optional[str] = None
+    gp_do: Optional[str] = None
+    consignor_name: Optional[str] = None
+    consignor_address: Optional[str] = None
+    consignee_name: Optional[str] = None
+    consignee_address: Optional[str] = None
+    # Billing Entity
+    billing_pan: Optional[str] = None
+    billing_name: Optional[str] = None
+    tds_category: Optional[str] = None
+    tds_status: Optional[TDSStatus] = None
+    # Vendor Bill (Simplified)
+    base_freight: Optional[float] = None
+    additionals: Optional[float] = None
+    deductibles: Optional[float] = None
+    advance_paid: Optional[float] = None
+    outstanding_amount: Optional[float] = None
+    # LR Workflow
+    lr_workflow_step: Optional[LRWorkflowStep] = None
     created_at: datetime
     updated_at: datetime
 
@@ -916,6 +1051,18 @@ async def get_order_detail(order_id: str):
 def generate_trip_number():
     return f"TRP-{datetime.now().year}-{str(uuid.uuid4())[:8].upper()}"
 
+def generate_lr_number():
+    return f"LR-{datetime.now().year}-{str(uuid.uuid4())[:6].upper()}"
+
+def calculate_outstanding(trip_data):
+    """Calculate outstanding amount from vendor bill fields"""
+    base = float(trip_data.get('base_freight') or trip_data.get('payable_amount') or 0)
+    additionals = float(trip_data.get('additionals') or 0)
+    deductibles = float(trip_data.get('deductibles') or 0)
+    advance_paid = float(trip_data.get('advance_paid') or 0)
+    total = base + additionals - deductibles
+    return total - advance_paid
+
 @api_router.get("/trips", response_model=List[TripResponse])
 async def get_trips(order_id: Optional[str] = None, transporter_id: Optional[str] = None, status: Optional[TripStatus] = None):
     query = supabase.table("trips").select("*").eq("is_deleted", False).order("created_at", desc=True)
@@ -928,12 +1075,25 @@ async def get_trips(order_id: Optional[str] = None, transporter_id: Optional[str
         query = query.eq("status", status.value)
     
     result = query.execute()
+    # Calculate outstanding for each trip
+    for trip in result.data:
+        if trip.get("outstanding_amount") is None:
+            trip["outstanding_amount"] = calculate_outstanding(trip)
     return result.data
 
 @api_router.post("/trips", response_model=TripResponse)
 async def create_trip(trip: TripCreate):
     trip_data = trip.model_dump()
     trip_data["trip_number"] = generate_trip_number()
+    trip_data["lr_number"] = generate_lr_number()
+    # Set default workflow step
+    if not trip_data.get("lr_workflow_step"):
+        trip_data["lr_workflow_step"] = LRWorkflowStep.LR_CREATION.value
+    # Calculate outstanding
+    trip_data["outstanding_amount"] = calculate_outstanding(trip_data)
+    # Set base_freight from payable_amount if not provided
+    if not trip_data.get("base_freight"):
+        trip_data["base_freight"] = trip_data.get("payable_amount")
     result = supabase.table("trips").insert(trip_data).execute()
     return result.data[0]
 
@@ -942,11 +1102,21 @@ async def get_trip(trip_id: str):
     result = supabase.table("trips").select("*").eq("id", trip_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Trip not found")
-    return result.data[0]
+    trip = result.data[0]
+    # Calculate outstanding if not present
+    if trip.get("outstanding_amount") is None:
+        trip["outstanding_amount"] = calculate_outstanding(trip)
+    return trip
 
 @api_router.put("/trips/{trip_id}", response_model=TripResponse)
 async def update_trip(trip_id: str, trip: TripCreate):
-    result = supabase.table("trips").update(trip.model_dump()).eq("id", trip_id).execute()
+    trip_data = trip.model_dump()
+    # Recalculate outstanding
+    trip_data["outstanding_amount"] = calculate_outstanding(trip_data)
+    # Set base_freight from payable_amount if not provided
+    if not trip_data.get("base_freight"):
+        trip_data["base_freight"] = trip_data.get("payable_amount")
+    result = supabase.table("trips").update(trip_data).eq("id", trip_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Trip not found")
     return result.data[0]
@@ -955,6 +1125,69 @@ async def update_trip(trip_id: str, trip: TripCreate):
 async def delete_trip(trip_id: str):
     result = supabase.table("trips").update({"is_deleted": True}).eq("id", trip_id).execute()
     return {"message": "Trip deleted successfully"}
+
+# LR Workflow Update Model
+class LRWorkflowUpdate(BaseModel):
+    lr_workflow_step: Optional[LRWorkflowStep] = None
+    # LR/Consignment Details
+    loading_date: Optional[datetime] = None
+    description_of_goods: Optional[str] = None
+    gross_weight_mt: Optional[float] = None
+    tare_weight_mt: Optional[float] = None
+    net_weight_mt: Optional[float] = None
+    # Invoice Details
+    eway_bill: Optional[str] = None
+    seal_number: Optional[str] = None
+    invoice_number: Optional[str] = None
+    # Basic Details
+    dc_oa: Optional[str] = None
+    gp_do: Optional[str] = None
+    consignor_name: Optional[str] = None
+    consignor_address: Optional[str] = None
+    consignee_name: Optional[str] = None
+    consignee_address: Optional[str] = None
+    # Billing Entity
+    billing_pan: Optional[str] = None
+    billing_name: Optional[str] = None
+    tds_category: Optional[str] = None
+    tds_status: Optional[TDSStatus] = None
+    # Vendor Bill (Simplified)
+    base_freight: Optional[float] = None
+    additionals: Optional[float] = None
+    deductibles: Optional[float] = None
+    advance_paid: Optional[float] = None
+
+@api_router.patch("/trips/{trip_id}/lr", response_model=TripResponse)
+async def update_trip_lr(trip_id: str, lr_update: LRWorkflowUpdate):
+    """Update LR-specific fields for a trip"""
+    # Get current trip data
+    current = supabase.table("trips").select("*").eq("id", trip_id).execute()
+    if not current.data:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    
+    current_trip = current.data[0]
+    
+    # Build update data only with provided fields
+    update_data = {}
+    lr_data = lr_update.model_dump(exclude_unset=True)
+    
+    for key, value in lr_data.items():
+        if value is not None:
+            update_data[key] = value
+    
+    # Merge with current data for outstanding calculation
+    merged_data = {**current_trip, **update_data}
+    update_data["outstanding_amount"] = calculate_outstanding(merged_data)
+    update_data["updated_at"] = datetime.now().isoformat()
+    
+    result = supabase.table("trips").update(update_data).eq("id", trip_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    
+    trip = result.data[0]
+    if trip.get("outstanding_amount") is None:
+        trip["outstanding_amount"] = calculate_outstanding(trip)
+    return trip
 
 # Payment endpoints
 @api_router.get("/payments", response_model=List[PaymentResponse])
