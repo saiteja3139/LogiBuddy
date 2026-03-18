@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
 from supabase import create_client, Client
 from enum import Enum
@@ -16,321 +16,324 @@ import uuid
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# DEVELOPMENT MODE: Using in-memory mock database
-# This allows the app to work without Supabase setup
-MOCK_DB = {
-    'customers': [],
-    'transporters': [],
-    'trucks': [],
-    'orders': [],
-    'trips': [],
-    'payments': [],
-    'payment_allocations': [],
-    'drivers': [],
-    'documents': []
-}
+# Environment configuration
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY")
+USE_REAL_SUPABASE = SUPABASE_URL and SUPABASE_KEY and os.environ.get("USE_MOCK_DB", "false").lower() != "true"
 
-# Mock Supabase client for development
-class MockSupabase:
-    def table(self, table_name):
-        return MockTable(table_name)
-    
-    class auth:
-        @staticmethod
-        def sign_in_with_password(credentials):
-            raise HTTPException(status_code=501, detail="Auth disabled in demo mode")
-        
-        @staticmethod
-        def sign_out():
-            return {"message": "Logged out"}
-        
-        @staticmethod
-        def get_user(token):
-            return None
-    
-    class storage:
-        @staticmethod
-        def from_(bucket):
-            return MockStorage()
+# Initialize Supabase client
+if USE_REAL_SUPABASE:
+    print(f"Connecting to Supabase: {SUPABASE_URL}")
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+else:
+    print("Running in DEMO MODE with mock database")
+    # DEVELOPMENT MODE: Using in-memory mock database
+    MOCK_DB = {
+        'customers': [],
+        'transporters': [],
+        'trucks': [],
+        'orders': [],
+        'trips': [],
+        'payments': [],
+        'payment_allocations': [],
+        'drivers': [],
+        'documents': []
+    }
 
-class MockStorage:
-    def upload(self, path, content, options):
-        return {"path": path}
-    
-    def get_public_url(self, path):
-        return f"https://mock-storage.com/{path}"
-
-class MockTable:
-    def __init__(self, table_name):
-        self.table_name = table_name
-        self.query = {}
-        self.in_queries = {}
+if not USE_REAL_SUPABASE:
+    # Mock Supabase client for development
+    class MockSupabase:
+        def table(self, table_name):
+            return MockTable(table_name)
         
-    def select(self, columns="*"):
-        self.columns = columns
-        return self
-    
-    def insert(self, data):
-        if not isinstance(data, list):
-            data = [data]
-        inserted_items = []
-        for item in data:
-            if 'id' not in item:
-                item['id'] = str(uuid.uuid4())
-            if 'created_at' not in item:
-                item['created_at'] = datetime.now().isoformat()
-            if 'updated_at' not in item:
-                item['updated_at'] = datetime.now().isoformat()
-            MOCK_DB[self.table_name].append(item)
-            inserted_items.append(item)
-        self._inserted_data = inserted_items
-        return self
-    
-    def update(self, data):
-        self.update_data = data
-        return self
-    
-    def delete(self):
-        return self
-    
-    def eq(self, field, value):
-        self.query[field] = value
-        return self
-    
-    def in_(self, field, values):
-        self.in_queries[field] = values
-        return self
-    
-    def or_(self, condition):
-        return self
-    
-    def order(self, field, desc=False):
-        return self
-    
-    def limit(self, n):
-        return self
-    
-    def execute(self):
-        # If we just inserted, return the inserted data
-        if hasattr(self, '_inserted_data'):
+        class auth:
+            @staticmethod
+            def sign_in_with_password(credentials):
+                raise HTTPException(status_code=501, detail="Auth disabled in demo mode")
+            
+            @staticmethod
+            def sign_out():
+                return {"message": "Logged out"}
+            
+            @staticmethod
+            def get_user(token):
+                return None
+        
+        class storage:
+            @staticmethod
+            def from_(bucket):
+                return MockStorage()
+
+    class MockStorage:
+        def upload(self, path, content, options):
+            return {"path": path}
+        
+        def get_public_url(self, path):
+            return f"https://mock-storage.com/{path}"
+
+    class MockTable:
+        def __init__(self, table_name):
+            self.table_name = table_name
+            self.query = {}
+            self.in_queries = {}
+            
+        def select(self, columns="*"):
+            self.columns = columns
+            return self
+        
+        def insert(self, data):
+            if not isinstance(data, list):
+                data = [data]
+            inserted_items = []
+            for item in data:
+                if 'id' not in item:
+                    item['id'] = str(uuid.uuid4())
+                if 'created_at' not in item:
+                    item['created_at'] = datetime.now(timezone.utc).isoformat()
+                if 'updated_at' not in item:
+                    item['updated_at'] = datetime.now(timezone.utc).isoformat()
+                MOCK_DB[self.table_name].append(item)
+                inserted_items.append(item)
+            self._inserted_data = inserted_items
+            return self
+        
+        def update(self, data):
+            self.update_data = data
+            return self
+        
+        def delete(self):
+            return self
+        
+        def eq(self, field, value):
+            self.query[field] = value
+            return self
+        
+        def in_(self, field, values):
+            self.in_queries[field] = values
+            return self
+        
+        def or_(self, condition):
+            return self
+        
+        def order(self, field, desc=False):
+            return self
+        
+        def limit(self, n):
+            return self
+        
+        def execute(self):
+            # If we just inserted, return the inserted data
+            if hasattr(self, '_inserted_data'):
+                class Response:
+                    pass
+                response = Response()
+                response.data = self._inserted_data
+                return response
+            
+            data = MOCK_DB[self.table_name].copy()
+            
+            # Apply filters
+            for field, value in self.query.items():
+                data = [item for item in data if item.get(field) == value]
+            
+            # Apply in_ filters
+            for field, values in self.in_queries.items():
+                data = [item for item in data if item.get(field) in values]
+            
+            # Apply updates
+            if hasattr(self, 'update_data'):
+                for item in data:
+                    item.update(self.update_data)
+                    item['updated_at'] = datetime.now(timezone.utc).isoformat()
+            
             class Response:
                 pass
             response = Response()
-            response.data = self._inserted_data
+            response.data = data
             return response
-        
-        data = MOCK_DB[self.table_name].copy()
-        
-        # Apply filters
-        for field, value in self.query.items():
-            data = [item for item in data if item.get(field) == value]
-        
-        # Apply in_ filters
-        for field, values in self.in_queries.items():
-            data = [item for item in data if item.get(field) in values]
-        
-        # Apply updates
-        if hasattr(self, 'update_data'):
-            for item in data:
-                item.update(self.update_data)
-                item['updated_at'] = datetime.now().isoformat()
-        
-        class Response:
-            pass
-        response = Response()
-        response.data = data
-        return response
 
-supabase = MockSupabase()
+    supabase = MockSupabase()
 
-# Add seed data for demo
-MOCK_DB['customers'] = [
-    {
-        'id': '1', 'name': 'ABC Logistics Pvt Ltd', 'phone': '9876543210',
-        'email': 'abc@logistics.com', 'gstin': '27AABCU9603R1ZM',
-        'payment_terms_days': 30, 'address': 'Mumbai, Maharashtra',
-        'notes': None, 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-    {
-        'id': '2', 'name': 'XYZ Industries', 'phone': '9876543211',
-        'email': 'xyz@industries.com', 'gstin': '29AABCU9603R1ZN',
-        'payment_terms_days': 15, 'address': 'Bangalore, Karnataka',
-        'notes': None, 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-]
+    # Add seed data for demo (only in mock mode)
+    MOCK_DB['customers'] = [
+        {
+            'id': '1', 'name': 'ABC Logistics Pvt Ltd', 'phone': '9876543210',
+            'email': 'abc@logistics.com', 'gstin': '27AABCU9603R1ZM',
+            'payment_terms_days': 30, 'address': 'Mumbai, Maharashtra',
+            'notes': None, 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+        {
+            'id': '2', 'name': 'XYZ Industries', 'phone': '9876543211',
+            'email': 'xyz@industries.com', 'gstin': '29AABCU9603R1ZN',
+            'payment_terms_days': 15, 'address': 'Bangalore, Karnataka',
+            'notes': None, 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+    ]
 
-MOCK_DB['transporters'] = [
-    {
-        'id': '1', 'name': 'Sharma Transports', 'phone': '9988776655',
-        'gstin': '27AAAFS1234F1Z5', 'pan': 'AAAFS1234F',
-        'bank_account_name': 'Rajesh Sharma', 'bank_account_number': '123456789012',
-        'ifsc': 'SBIN0001234', 'bank_name': 'State Bank of India',
-        'address': 'Delhi', 'is_deleted': False,
-        'kyc_pan_url': None, 'kyc_aadhaar_url': None, 'kyc_rc_url': None,
-        'kyc_insurance_url': None, 'kyc_permit_url': None,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-]
+    MOCK_DB['transporters'] = [
+        {
+            'id': '1', 'name': 'Sharma Transports', 'phone': '9988776655',
+            'gstin': '27AAAFS1234F1Z5', 'pan': 'AAAFS1234F',
+            'bank_account_name': 'Rajesh Sharma', 'bank_account_number': '123456789012',
+            'ifsc': 'SBIN0001234', 'bank_name': 'State Bank of India',
+            'address': 'Delhi', 'is_deleted': False,
+            'kyc_pan_url': None, 'kyc_aadhaar_url': None, 'kyc_rc_url': None,
+            'kyc_insurance_url': None, 'kyc_permit_url': None,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+    ]
 
-MOCK_DB['trucks'] = [
-    {
-        'id': '1', 'transporter_id': '1', 'truck_number': 'MH02AB1234',
-        'truck_type': 'Closed Container', 'capacity_mt': 20.0,
-        'rc_expiry_date': '2026-12-31', 'insurance_expiry_date': '2026-06-30',
-        'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-]
+    MOCK_DB['trucks'] = [
+        {
+            'id': '1', 'transporter_id': '1', 'truck_number': 'MH02AB1234',
+            'truck_type': 'Closed Container', 'capacity_mt': 20.0,
+            'rc_expiry_date': '2026-12-31', 'insurance_expiry_date': '2026-06-30',
+            'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+    ]
 
-MOCK_DB['orders'] = [
-    {
-        'id': '1', 'order_number': 'ORD-2025-001', 'customer_id': '1',
-        'origin': 'Mumbai', 'destination': 'Pune', 'material': 'Steel Coils',
-        'total_qty_mt': 100.0, 'rate_type': 'PER_MT', 'customer_rate_value': 5000.0,
-        'order_date': '2025-01-15', 'expected_end_date': None, 'status': 'ACTIVE',
-        'is_deleted': False,
-        'created_at': '2025-01-15T00:00:00', 'updated_at': '2025-01-15T00:00:00'
-    },
-]
+    MOCK_DB['orders'] = [
+        {
+            'id': '1', 'order_number': 'ORD-2025-001', 'customer_id': '1',
+            'origin': 'Mumbai', 'destination': 'Pune', 'material': 'Steel Coils',
+            'total_qty_mt': 100.0, 'rate_type': 'PER_MT', 'customer_rate_value': 5000.0,
+            'order_date': '2025-01-15', 'expected_end_date': None, 'status': 'ACTIVE',
+            'is_deleted': False,
+            'created_at': '2025-01-15T00:00:00', 'updated_at': '2025-01-15T00:00:00'
+        },
+    ]
 
-MOCK_DB['trips'] = [
-    {
-        'id': '1', 'trip_number': 'TRP-2025-001', 'lr_number': 'LR-2025-000001',
-        'order_id': '1', 'transporter_id': '1', 'truck_id': '1', 'driver_id': '1',
-        'trip_date': '2025-01-16', 'delivered_date': '2025-01-17',
-        'qty_mt': 20.0, 'payable_amount': 85000.0, 'customer_bill_amount': 100000.0,
-        'status': 'DELIVERED', 'lr_copy_url': None, 'pod_url': None,
-        # LR/Consignment Details
-        'loading_date': '2025-01-16T10:00:00', 'description_of_goods': 'Steel Coils',
-        'gross_weight_mt': 21.5, 'tare_weight_mt': 1.5, 'net_weight_mt': 20.0,
-        # Invoice Details
-        'eway_bill': '192345678901234', 'seal_number': 'SEAL-001', 'invoice_number': 'INV-2025-001',
-        # Basic Details
-        'dc_oa': 'DC-001', 'gp_do': 'GP-001',
-        'consignor_name': 'ABC Steel Works', 'consignor_address': 'Industrial Area, Mumbai',
-        'consignee_name': 'XYZ Manufacturing', 'consignee_address': 'MIDC, Pune',
-        # Billing Entity
-        'billing_pan': 'AAAFS1234F', 'billing_name': 'Sharma Transports',
-        'tds_category': '194C', 'tds_status': 'APPROVED',
-        # Vendor Bill
-        'base_freight': 85000.0, 'additionals': 2000.0, 'deductibles': 500.0,
-        'advance_paid': 50000.0, 'outstanding_amount': 36500.0,
-        # Workflow
-        'lr_workflow_step': 'TRIP_ADVANCES',
-        'is_deleted': False,
-        'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-17T00:00:00'
-    },
-]
+    MOCK_DB['trips'] = [
+        {
+            'id': '1', 'trip_number': 'TRP-2025-001', 'lr_number': 'LR-2025-000001',
+            'order_id': '1', 'transporter_id': '1', 'truck_id': '1', 'driver_id': '1',
+            'trip_date': '2025-01-16', 'delivered_date': '2025-01-17',
+            'qty_mt': 20.0, 'payable_amount': 85000.0, 'customer_bill_amount': 100000.0,
+            'status': 'DELIVERED', 'lr_copy_url': None, 'pod_url': None,
+            'loading_date': '2025-01-16T10:00:00', 'description_of_goods': 'Steel Coils',
+            'gross_weight_mt': 21.5, 'tare_weight_mt': 1.5, 'net_weight_mt': 20.0,
+            'eway_bill': '192345678901234', 'seal_number': 'SEAL-001', 'invoice_number': 'INV-2025-001',
+            'dc_oa': 'DC-001', 'gp_do': 'GP-001',
+            'consignor_name': 'ABC Steel Works', 'consignor_address': 'Industrial Area, Mumbai',
+            'consignee_name': 'XYZ Manufacturing', 'consignee_address': 'MIDC, Pune',
+            'billing_pan': 'AAAFS1234F', 'billing_name': 'Sharma Transports',
+            'tds_category': '194C', 'tds_status': 'APPROVED',
+            'base_freight': 85000.0, 'additionals': 2000.0, 'deductibles': 500.0,
+            'advance_paid': 50000.0, 'outstanding_amount': 36500.0,
+            'lr_workflow_step': 'TRIP_ADVANCES',
+            'is_deleted': False,
+            'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-17T00:00:00'
+        },
+    ]
 
-MOCK_DB['payments'] = [
-    {
-        'id': '1', 'payment_direction': 'RECEIVED', 'party_type': 'CUSTOMER',
-        'party_id': '1', 'amount': 100000.0, 'payment_date': '2025-01-25',
-        'mode': 'NEFT', 'reference': 'UTR123456789', 'notes': None,
-        'is_deleted': False,
-        'created_at': '2025-01-25T00:00:00', 'updated_at': '2025-01-25T00:00:00'
-    },
-]
+    MOCK_DB['payments'] = [
+        {
+            'id': '1', 'payment_direction': 'RECEIVED', 'party_type': 'CUSTOMER',
+            'party_id': '1', 'amount': 100000.0, 'payment_date': '2025-01-25',
+            'mode': 'NEFT', 'reference': 'UTR123456789', 'notes': None,
+            'is_deleted': False,
+            'created_at': '2025-01-25T00:00:00', 'updated_at': '2025-01-25T00:00:00'
+        },
+    ]
 
-MOCK_DB['payment_allocations'] = [
-    {
-        'id': '1', 'payment_id': '1', 'allocate_to_type': 'TRIP',
-        'allocate_to_id': '1', 'allocated_amount': 100000.0,
-        'created_at': '2025-01-25T00:00:00', 'updated_at': '2025-01-25T00:00:00'
-    },
-]
+    MOCK_DB['payment_allocations'] = [
+        {
+            'id': '1', 'payment_id': '1', 'allocate_to_type': 'TRIP',
+            'allocate_to_id': '1', 'allocated_amount': 100000.0,
+            'created_at': '2025-01-25T00:00:00', 'updated_at': '2025-01-25T00:00:00'
+        },
+    ]
 
-# Add seed data for drivers
-MOCK_DB['drivers'] = [
-    {
-        'id': '1', 'transporter_id': '1', 'name': 'Rajesh Kumar', 'phone': '9876543220',
-        'license_number': 'DL1420110012345', 'license_expiry_date': '2026-12-31',
-        'address': 'Delhi', 'notes': 'Experienced driver', 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-    {
-        'id': '2', 'transporter_id': '1', 'name': 'Amit Singh', 'phone': '9876543221',
-        'license_number': 'MH0220110054321', 'license_expiry_date': '2025-06-30',
-        'address': 'Mumbai', 'notes': None, 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-]
+    MOCK_DB['drivers'] = [
+        {
+            'id': '1', 'transporter_id': '1', 'name': 'Rajesh Kumar', 'phone': '9876543220',
+            'license_number': 'DL1420110012345', 'license_expiry_date': '2026-12-31',
+            'address': 'Delhi', 'notes': 'Experienced driver', 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+        {
+            'id': '2', 'transporter_id': '1', 'name': 'Amit Singh', 'phone': '9876543221',
+            'license_number': 'MH0220110054321', 'license_expiry_date': '2025-06-30',
+            'address': 'Mumbai', 'notes': None, 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+    ]
 
-# Add seed data for documents
-MOCK_DB['documents'] = [
-    {
-        'id': '1', 'doc_type': 'KYC', 'entity_type': 'TRANSPORTER', 'entity_id': '1',
-        'title': 'PAN Card', 'file_name': 'pan_card.pdf', 
-        'file_path': 'kyc_docs/transporter/1/pan_card.pdf',
-        'file_url': 'https://mock-storage.com/pan_card.pdf',
-        'mime_type': 'application/pdf', 'file_size': 102400,
-        'issue_date': '2020-01-15', 'expiry_date': None, 'notes': None,
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-    {
-        'id': '2', 'doc_type': 'VEHICLE', 'entity_type': 'TRUCK', 'entity_id': '1',
-        'title': 'RC Book', 'file_name': 'rc_book.pdf',
-        'file_path': 'vehicle_docs/truck/1/rc_book.pdf',
-        'file_url': 'https://mock-storage.com/rc_book.pdf',
-        'mime_type': 'application/pdf', 'file_size': 204800,
-        'issue_date': '2020-03-20', 'expiry_date': '2026-12-31', 'notes': 'Valid RC',
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-    {
-        'id': '3', 'doc_type': 'DRIVER', 'entity_type': 'DRIVER', 'entity_id': '1',
-        'title': 'Driving License', 'file_name': 'dl_front.jpg',
-        'file_path': 'driver_docs/driver/1/dl_front.jpg',
-        'file_url': 'https://mock-storage.com/dl_front.jpg',
-        'mime_type': 'image/jpeg', 'file_size': 512000,
-        'issue_date': '2021-01-10', 'expiry_date': '2026-12-31', 'notes': 'Heavy vehicle license',
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
-    },
-    {
-        'id': '4', 'doc_type': 'TRIP', 'entity_type': 'TRIP', 'entity_id': '1',
-        'title': 'POD Image', 'file_name': 'pod_delivered.jpg',
-        'file_path': 'trip_docs/trip/1/pod_delivered.jpg',
-        'file_url': 'https://mock-storage.com/pod_delivered.jpg',
-        'mime_type': 'image/jpeg', 'file_size': 768000,
-        'issue_date': '2025-01-17', 'expiry_date': None, 'notes': 'Delivery proof',
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
-    },
-    {
-        'id': '5', 'doc_type': 'LR', 'entity_type': 'TRIP', 'entity_id': '1',
-        'title': 'Lorry Receipt Copy', 'file_name': 'lr_copy.pdf',
-        'file_path': 'trip_docs/trip/1/lr_copy.pdf',
-        'file_url': 'https://mock-storage.com/lr_copy.pdf',
-        'mime_type': 'application/pdf', 'file_size': 256000,
-        'issue_date': '2025-01-16', 'expiry_date': None, 'notes': 'Original LR document',
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-16T00:00:00'
-    },
-    {
-        'id': '6', 'doc_type': 'INVOICE', 'entity_type': 'TRIP', 'entity_id': '1',
-        'title': 'Trip Invoice', 'file_name': 'invoice_001.pdf',
-        'file_path': 'trip_docs/trip/1/invoice_001.pdf',
-        'file_url': 'https://mock-storage.com/invoice_001.pdf',
-        'mime_type': 'application/pdf', 'file_size': 128000,
-        'issue_date': '2025-01-16', 'expiry_date': None, 'notes': 'Customer invoice',
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-16T00:00:00'
-    },
-    {
-        'id': '7', 'doc_type': 'POD', 'entity_type': 'TRIP', 'entity_id': '1',
-        'title': 'Proof of Delivery', 'file_name': 'pod_signed.jpg',
-        'file_path': 'trip_docs/trip/1/pod_signed.jpg',
-        'file_url': 'https://mock-storage.com/pod_signed.jpg',
-        'mime_type': 'image/jpeg', 'file_size': 512000,
-        'issue_date': '2025-01-17', 'expiry_date': None, 'notes': 'Signed POD from customer',
-        'uploaded_by': 'demo-user', 'is_deleted': False,
-        'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
-    },
-]
+    MOCK_DB['documents'] = [
+        {
+            'id': '1', 'doc_type': 'KYC', 'entity_type': 'TRANSPORTER', 'entity_id': '1',
+            'title': 'PAN Card', 'file_name': 'pan_card.pdf', 
+            'file_path': 'kyc_docs/transporter/1/pan_card.pdf',
+            'file_url': 'https://mock-storage.com/pan_card.pdf',
+            'mime_type': 'application/pdf', 'file_size': 102400,
+            'issue_date': '2020-01-15', 'expiry_date': None, 'notes': None,
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+        {
+            'id': '2', 'doc_type': 'VEHICLE', 'entity_type': 'TRUCK', 'entity_id': '1',
+            'title': 'RC Book', 'file_name': 'rc_book.pdf',
+            'file_path': 'vehicle_docs/truck/1/rc_book.pdf',
+            'file_url': 'https://mock-storage.com/rc_book.pdf',
+            'mime_type': 'application/pdf', 'file_size': 204800,
+            'issue_date': '2020-03-20', 'expiry_date': '2026-12-31', 'notes': 'Valid RC',
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+        {
+            'id': '3', 'doc_type': 'DRIVER', 'entity_type': 'DRIVER', 'entity_id': '1',
+            'title': 'Driving License', 'file_name': 'dl_front.jpg',
+            'file_path': 'driver_docs/driver/1/dl_front.jpg',
+            'file_url': 'https://mock-storage.com/dl_front.jpg',
+            'mime_type': 'image/jpeg', 'file_size': 512000,
+            'issue_date': '2021-01-10', 'expiry_date': '2026-12-31', 'notes': 'Heavy vehicle license',
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-01T00:00:00', 'updated_at': '2025-01-01T00:00:00'
+        },
+        {
+            'id': '4', 'doc_type': 'TRIP', 'entity_type': 'TRIP', 'entity_id': '1',
+            'title': 'POD Image', 'file_name': 'pod_delivered.jpg',
+            'file_path': 'trip_docs/trip/1/pod_delivered.jpg',
+            'file_url': 'https://mock-storage.com/pod_delivered.jpg',
+            'mime_type': 'image/jpeg', 'file_size': 768000,
+            'issue_date': '2025-01-17', 'expiry_date': None, 'notes': 'Delivery proof',
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
+        },
+        {
+            'id': '5', 'doc_type': 'LR', 'entity_type': 'TRIP', 'entity_id': '1',
+            'title': 'Lorry Receipt Copy', 'file_name': 'lr_copy.pdf',
+            'file_path': 'trip_docs/trip/1/lr_copy.pdf',
+            'file_url': 'https://mock-storage.com/lr_copy.pdf',
+            'mime_type': 'application/pdf', 'file_size': 256000,
+            'issue_date': '2025-01-16', 'expiry_date': None, 'notes': 'Original LR document',
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-16T00:00:00'
+        },
+        {
+            'id': '6', 'doc_type': 'INVOICE', 'entity_type': 'TRIP', 'entity_id': '1',
+            'title': 'Trip Invoice', 'file_name': 'invoice_001.pdf',
+            'file_path': 'trip_docs/trip/1/invoice_001.pdf',
+            'file_url': 'https://mock-storage.com/invoice_001.pdf',
+            'mime_type': 'application/pdf', 'file_size': 128000,
+            'issue_date': '2025-01-16', 'expiry_date': None, 'notes': 'Customer invoice',
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-16T00:00:00', 'updated_at': '2025-01-16T00:00:00'
+        },
+        {
+            'id': '7', 'doc_type': 'POD', 'entity_type': 'TRIP', 'entity_id': '1',
+            'title': 'Proof of Delivery', 'file_name': 'pod_signed.jpg',
+            'file_path': 'trip_docs/trip/1/pod_signed.jpg',
+            'file_url': 'https://mock-storage.com/pod_signed.jpg',
+            'mime_type': 'image/jpeg', 'file_size': 512000,
+            'issue_date': '2025-01-17', 'expiry_date': None, 'notes': 'Signed POD from customer',
+            'uploaded_by': 'demo-user', 'is_deleted': False,
+            'created_at': '2025-01-17T00:00:00', 'updated_at': '2025-01-17T00:00:00'
+        },
+    ]
 
 # Create the main app without a prefix
 app = FastAPI()
