@@ -19,12 +19,35 @@ Build a lean web app MVP for an Indian logistics broker (freight brokerage). The
 - Document management feature (upload, view, delete) using mock storage
 - CRUD functionality for Customers, Orders, Transporters
 - Local setup documentation
+- **LR (Lorry Receipt) Tracking Feature** (NEW - March 2026)
+
+### LR Tracking Feature (Completed)
+Based on competitor analysis, implemented comprehensive LR tracking:
+
+**Workflow Steps:**
+1. LR Creation - Auto-generated when trip is created
+2. Document Verification - Upload/verify trip documents
+3. Trip Advances - Record advance payments and deductibles
+4. POD Upload - Proof of Delivery completion
+
+**New Trip/LR Fields:**
+- Vehicle Details: Vehicle No, Transporter (Broker), Phones, Vendor PAN
+- Basic Details: From/To, Consignor/Consignee, Loading Date, DC/OA, GP/DO
+- Consignment Details: Description of Goods, Gross/Tare/Net Weight (MT)
+- Invoice Details: E-way Bill, Seal Number, Invoice Number
+- Billing Entity: PAN Card, Name on PAN, TDS Category, TDS Status
+- Vendor Bill: Base Freight, Additionals, Deductibles, Advance Paid, Outstanding
+
+**New API Endpoints:**
+- `PATCH /api/trips/{trip_id}/lr` - Update LR-specific fields
+- Auto-generated LR number format: `LR-YYYY-XXXXXX`
 
 ### Architecture
 ```
 /app/
 ├── backend/
 │   ├── server.py         # Monolithic FastAPI app with mock DB
+│   ├── tests/            # Pytest test files
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
@@ -50,7 +73,7 @@ Build a lean web app MVP for an Indian logistics broker (freight brokerage). The
   - Phase 2: Storage - Connect document uploads to Supabase Storage
 
 ### P1 - High Priority  
-- [ ] Complete CRUD for Trucks, Trips, Payments, Drivers
+- [ ] Complete CRUD for Trucks, Payments, Drivers
 - [ ] Full Driver Management pages with CRUD and documents
 
 ### P2 - Medium Priority
@@ -66,6 +89,7 @@ Build a lean web app MVP for an Indian logistics broker (freight brokerage). The
 All endpoints in `backend/server.py`, require mock auth token:
 - `/api/dashboard`
 - `/api/customers`, `/api/orders`, `/api/transporters`, `/api/trucks`, `/api/trips`, `/api/drivers`
+- `/api/trips/{trip_id}/lr` (PATCH) - Update LR workflow fields
 - `/api/documents`, `/api/documents/upload`
 - `/api/reports/*`
 
@@ -73,3 +97,7 @@ All endpoints in `backend/server.py`, require mock auth token:
 See `/app/migrations/001_initial_schema.sql` for full schema.
 
 Core entities: customers, transporters, trucks, orders, trips, payments, payment_allocations, documents, drivers
+
+## Test Reports
+- `/app/test_reports/iteration_1.json` - LR workflow feature tests (100% pass rate)
+- `/app/backend/tests/test_lr_workflow.py` - Backend pytest tests
