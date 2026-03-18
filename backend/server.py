@@ -780,7 +780,7 @@ async def get_customers(search: Optional[str] = None):
 
 @api_router.post("/customers", response_model=CustomerResponse)
 async def create_customer(customer: CustomerCreate):
-    result = supabase.table("customers").insert(customer.model_dump()).execute()
+    result = supabase.table("customers").insert(serialize_for_db(customer.model_dump())).execute()
     return result.data[0]
 
 @api_router.get("/customers/{customer_id}", response_model=CustomerResponse)
@@ -792,7 +792,7 @@ async def get_customer(customer_id: str):
 
 @api_router.put("/customers/{customer_id}", response_model=CustomerResponse)
 async def update_customer(customer_id: str, customer: CustomerCreate):
-    result = supabase.table("customers").update(customer.model_dump()).eq("id", customer_id).execute()
+    result = supabase.table("customers").update(serialize_for_db(customer.model_dump())).eq("id", customer_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Customer not found")
     return result.data[0]
@@ -872,7 +872,7 @@ async def get_transporters(search: Optional[str] = None):
 
 @api_router.post("/transporters", response_model=TransporterResponse)
 async def create_transporter(transporter: TransporterCreate):
-    result = supabase.table("transporters").insert(transporter.model_dump()).execute()
+    result = supabase.table("transporters").insert(serialize_for_db(transporter.model_dump())).execute()
     return result.data[0]
 
 @api_router.get("/transporters/{transporter_id}", response_model=TransporterResponse)
@@ -884,7 +884,7 @@ async def get_transporter(transporter_id: str):
 
 @api_router.put("/transporters/{transporter_id}", response_model=TransporterResponse)
 async def update_transporter(transporter_id: str, transporter: TransporterCreate):
-    result = supabase.table("transporters").update(transporter.model_dump()).eq("id", transporter_id).execute()
+    result = supabase.table("transporters").update(serialize_for_db(transporter.model_dump())).eq("id", transporter_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Transporter not found")
     return result.data[0]
@@ -943,7 +943,7 @@ async def get_trucks(transporter_id: Optional[str] = None):
 
 @api_router.post("/trucks", response_model=TruckResponse)
 async def create_truck(truck: TruckCreate):
-    result = supabase.table("trucks").insert(truck.model_dump()).execute()
+    result = supabase.table("trucks").insert(serialize_for_db(truck.model_dump())).execute()
     return result.data[0]
 
 @api_router.get("/trucks/{truck_id}", response_model=TruckResponse)
@@ -955,7 +955,7 @@ async def get_truck(truck_id: str):
 
 @api_router.put("/trucks/{truck_id}", response_model=TruckResponse)
 async def update_truck(truck_id: str, truck: TruckCreate):
-    result = supabase.table("trucks").update(truck.model_dump()).eq("id", truck_id).execute()
+    result = supabase.table("trucks").update(serialize_for_db(truck.model_dump())).eq("id", truck_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Truck not found")
     return result.data[0]
@@ -993,6 +993,7 @@ async def get_orders(customer_id: Optional[str] = None, status: Optional[OrderSt
 async def create_order(order: OrderCreate):
     order_data = order.model_dump()
     order_data["order_number"] = generate_order_number()
+    order_data = serialize_for_db(order_data)
     result = supabase.table("orders").insert(order_data).execute()
     response = result.data[0]
     response["transported_qty_mt"] = 0
@@ -1015,7 +1016,7 @@ async def get_order(order_id: str):
 
 @api_router.put("/orders/{order_id}", response_model=OrderResponse)
 async def update_order(order_id: str, order: OrderCreate):
-    result = supabase.table("orders").update(order.model_dump()).eq("id", order_id).execute()
+    result = supabase.table("orders").update(serialize_for_db(order.model_dump())).eq("id", order_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Order not found")
     
@@ -1084,6 +1085,18 @@ async def get_trips(order_id: Optional[str] = None, transporter_id: Optional[str
             trip["outstanding_amount"] = calculate_outstanding(trip)
     return result.data
 
+def serialize_for_db(data: dict) -> dict:
+    """Convert date/datetime objects to ISO format strings for database insertion"""
+    result = {}
+    for key, value in data.items():
+        if isinstance(value, (date, datetime)):
+            result[key] = value.isoformat() if value else None
+        elif isinstance(value, Enum):
+            result[key] = value.value if value else None
+        else:
+            result[key] = value
+    return result
+
 @api_router.post("/trips", response_model=TripResponse)
 async def create_trip(trip: TripCreate):
     trip_data = trip.model_dump()
@@ -1097,6 +1110,8 @@ async def create_trip(trip: TripCreate):
     # Set base_freight from payable_amount if not provided
     if not trip_data.get("base_freight"):
         trip_data["base_freight"] = trip_data.get("payable_amount")
+    # Serialize dates for database
+    trip_data = serialize_for_db(trip_data)
     result = supabase.table("trips").insert(trip_data).execute()
     return result.data[0]
 
@@ -1119,6 +1134,8 @@ async def update_trip(trip_id: str, trip: TripCreate):
     # Set base_freight from payable_amount if not provided
     if not trip_data.get("base_freight"):
         trip_data["base_freight"] = trip_data.get("payable_amount")
+    # Serialize dates for database
+    trip_data = serialize_for_db(trip_data)
     result = supabase.table("trips").update(trip_data).eq("id", trip_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Trip not found")
@@ -1214,7 +1231,7 @@ async def get_payments(party_type: Optional[PartyType] = None, party_id: Optiona
 
 @api_router.post("/payments", response_model=PaymentResponse)
 async def create_payment(payment: PaymentCreate):
-    result = supabase.table("payments").insert(payment.model_dump()).execute()
+    result = supabase.table("payments").insert(serialize_for_db(payment.model_dump())).execute()
     response = result.data[0]
     response["unallocated_amount"] = float(response["amount"])
     return response
@@ -1271,7 +1288,7 @@ async def delete_allocation(allocation_id: str):
 @api_router.get("/dashboard", response_model=DashboardStats)
 async def get_dashboard(user = Depends(verify_token)):
     # Calculate outstanding receivables
-    all_trips = supabase.table("trips").select("id, customer_bill_amount, status").eq("status", "DELIVERED").execute()
+    all_trips = supabase.table("trips").select("id, customer_bill_amount, payable_amount, status").eq("status", "DELIVERED").execute()
     total_billed = sum(float(t["customer_bill_amount"]) for t in all_trips.data)
     
     all_received_payments = supabase.table("payments").select("amount").eq("payment_direction", "RECEIVED").eq("party_type", "CUSTOMER").execute()
@@ -1443,7 +1460,7 @@ async def get_drivers(transporter_id: Optional[str] = None, search: Optional[str
 
 @api_router.post("/drivers", response_model=DriverResponse)
 async def create_driver(driver: DriverCreate):
-    result = supabase.table("drivers").insert(driver.model_dump()).execute()
+    result = supabase.table("drivers").insert(serialize_for_db(driver.model_dump())).execute()
     return result.data[0]
 
 @api_router.get("/drivers/{driver_id}", response_model=DriverResponse)
@@ -1455,7 +1472,7 @@ async def get_driver(driver_id: str):
 
 @api_router.put("/drivers/{driver_id}", response_model=DriverResponse)
 async def update_driver(driver_id: str, driver: DriverCreate):
-    result = supabase.table("drivers").update(driver.model_dump()).eq("id", driver_id).execute()
+    result = supabase.table("drivers").update(serialize_for_db(driver.model_dump())).eq("id", driver_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Driver not found")
     return result.data[0]
