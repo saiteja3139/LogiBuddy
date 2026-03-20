@@ -24,9 +24,9 @@ export default function Reports() {
         api.get('/reports/transporter-outstanding'),
         api.get('/reports/order-summary')
       ]);
-      setCustomerReport(custRes.data);
-      setTransporterReport(transRes.data);
-      setOrderReport(orderRes.data);
+      setCustomerReport(Array.isArray(custRes.data) ? custRes.data : []);
+      setTransporterReport(Array.isArray(transRes.data) ? transRes.data : []);
+      setOrderReport(Array.isArray(orderRes.data) ? orderRes.data : []);
     } catch (error) {
       toast.error('Failed to load reports');
     } finally {
