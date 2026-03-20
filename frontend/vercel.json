@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/"
+      "destination": "https://logibuddy.onrender.com/api/:path"
     }
   ]
 }
