@@ -37,8 +37,9 @@ export default function Transporters() {
   const fetchTransporters = async () => {
     try {
       const response = await api.get('/transporters');
-      setTransporters(response.data);
-      setFilteredTransporters(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setTransporters(data);
+      setFilteredTransporters(data);
     } catch (error) {
       toast.error('Failed to load transporters');
     }
