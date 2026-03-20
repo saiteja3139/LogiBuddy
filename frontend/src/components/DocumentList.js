@@ -12,11 +12,9 @@ export default function DocumentList({ docType, entityType, entityId, title = "D
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [entityType, entityId]);
-
   const fetchDocuments = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/documents', {
         params: {
           entity_type: entityType,
@@ -31,6 +29,14 @@ export default function DocumentList({ docType, entityType, entityId, title = "D
       setLoading(false);
     }
   };
+
+  if (entityType && entityId) {
+    fetchDocuments();
+  } else {
+    setDocuments([]);
+    setLoading(false);
+  }
+}, [docType, entityType, entityId]);
 
   const handleView = async (documentId, fileName) => {
     try {
