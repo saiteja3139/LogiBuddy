@@ -13,20 +13,27 @@ export default function OrderDetail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrderDetail();
-  }, [id]);
-
+useEffect(() => {
   const fetchOrderDetail = async () => {
     try {
+      setLoading(true);
       const response = await api.get(`/orders/${id}/detail`);
       setData(response.data);
     } catch (error) {
       toast.error('Failed to load order details');
+      setData(null);
     } finally {
       setLoading(false);
     }
   };
+
+  if (id) {
+    fetchOrderDetail();
+  } else {
+    setData(null);
+    setLoading(false);
+  }
+}, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Order not found</div>;
