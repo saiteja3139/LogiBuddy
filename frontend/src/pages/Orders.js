@@ -35,7 +35,8 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       const response = await api.get('/orders');
-      setOrders(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setOrders(data);
     } catch (error) {
       toast.error('Failed to load orders');
     }
