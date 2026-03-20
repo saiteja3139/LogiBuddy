@@ -42,24 +42,27 @@ useEffect(() => {
   fetchTransporters();
 }, [search]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingDriver) {
-        await api.put(`/drivers/${editingDriver.id}`, formData);
-        toast.success('Driver updated successfully');
-      } else {
-        await api.post('/drivers', formData);
-        toast.success('Driver created successfully');
-      }
-      setDialogOpen(false);
-      setEditingDriver(null);
-      resetForm();
-      fetchDrivers();
-    } catch (error) {
-      toast.error(editingDriver ? 'Failed to update driver' : 'Failed to create driver');
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    if (editingDriver) {
+      await api.put(`/drivers/${editingDriver.id}`, formData);
+      toast.success('Driver updated successfully');
+    } else {
+      await api.post('/drivers', formData);
+      toast.success('Driver created successfully');
     }
-  };
+
+    setDialogOpen(false);
+    setEditingDriver(null);
+    resetForm();
+
+    const response = await api.get('/drivers', { params: { search } });
+    setDrivers(response.data);
+  } catch (error) {
+    toast.error(editingDriver ? 'Failed to update driver' : 'Failed to create driver');
+  }
+};
 
   const resetForm = () => {
     setFormData({ transporter_id: '', name: '', phone: '', license_number: '', license_expiry_date: '', address: '', notes: '' });
@@ -76,7 +79,7 @@ useEffect(() => {
       try {
         await api.delete(`/drivers/${id}`);
         toast.success('Driver deleted successfully');
-        fetchDrivers();
+        setDrivers((prev) => prev.filter((driver) => driver.id !== id));
       } catch (error) {
         toast.error('Failed to delete driver');
       }
@@ -137,7 +140,12 @@ useEffect(() => {
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-        <Input placeholder="Search drivers..." value={search} onChange={(e) => { setSearch(e.target.value); fetchDrivers(); }} className="pl-10" />
+        <Input
+          placeholder="Search drivers..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       <div className="bg-white border shadow-sm rounded-sm overflow-hidden">
