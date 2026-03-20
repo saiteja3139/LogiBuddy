@@ -35,7 +35,7 @@ export default function Payments() {
   const fetchPayments = async () => {
     try {
       const response = await api.get('/payments');
-      setPayments(response.data);
+      setPayments(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       toast.error('Failed to load payments');
     }
@@ -44,14 +44,14 @@ export default function Payments() {
   const fetchCustomers = async () => {
     try {
       const response = await api.get('/customers');
-      setCustomers(response.data);
+      setCustomers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {}
   };
 
   const fetchTransporters = async () => {
     try {
       const response = await api.get('/transporters');
-      setTransporters(response.data);
+      setTransporters(Array.isArray(response.data) ? response.data : []);
     } catch (error) {}
   };
 
