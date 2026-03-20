@@ -30,7 +30,10 @@ export default function Dashboard() {
   const fetchExpiringDocuments = async () => {
     try {
       const response = await api.get('/documents/expiring/soon?days=30');
-      setExpiringDocs(response.data);
+      setExpiringDocs({
+        expiring_soon: response.data?.expiring_soon ?? [],
+        expired: response.data?.expired ?? [],
+      });
     } catch (error) {
       console.error('Failed to load expiring documents');
     }
