@@ -12,20 +12,24 @@ export default function CustomerDetail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCustomerDetail();
-  }, [id]);
+useEffect(() => {
+    const fetchCustomerDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/customers/${id}/detail`);
+        setData(response.data);
+      } catch (error) {
+        toast.error('Failed to load customer details');
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchCustomerDetail = async () => {
-    try {
-      const response = await api.get(`/customers/${id}/detail`);
-      setData(response.data);
-    } catch (error) {
-      toast.error('Failed to load customer details');
-    } finally {
-      setLoading(false);
+    if (id) {
+      fetchCustomerDetail();
     }
-  };
+  }, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Customer not found</div>;
