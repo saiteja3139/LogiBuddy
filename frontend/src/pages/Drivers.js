@@ -25,7 +25,8 @@ useEffect(() => {
   const fetchDrivers = async () => {
     try {
       const response = await api.get('/drivers', { params: { search } });
-      setDrivers(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setDrivers(data);
     } catch (error) {
       toast.error('Failed to load drivers');
     }
