@@ -13,20 +13,27 @@ export default function DriverDetail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDriverDetail();
-  }, [id]);
-
+useEffect(() => {
   const fetchDriverDetail = async () => {
     try {
+      setLoading(true);
       const response = await api.get(`/drivers/${id}/detail`);
       setData(response.data);
     } catch (error) {
       toast.error('Failed to load driver details');
+      setData(null);
     } finally {
       setLoading(false);
     }
   };
+
+  if (id) {
+    fetchDriverDetail();
+  } else {
+    setData(null);
+    setLoading(false);
+  }
+}, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Driver not found</div>;
