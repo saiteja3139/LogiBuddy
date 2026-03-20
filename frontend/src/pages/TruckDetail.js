@@ -15,24 +15,36 @@ export default function TruckDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTruckDetail();
-  }, [id]);
-
   const fetchTruckDetail = async () => {
     try {
+      setLoading(true);
+
       const truckResponse = await api.get(`/trucks/${id}`);
       setTruck(truckResponse.data);
-      
+
       if (truckResponse.data.transporter_id) {
         const transporterResponse = await api.get(`/transporters/${truckResponse.data.transporter_id}`);
         setTransporter(transporterResponse.data);
+      } else {
+        setTransporter(null);
       }
     } catch (error) {
       toast.error('Failed to load truck details');
+      setTruck(null);
+      setTransporter(null);
     } finally {
       setLoading(false);
     }
   };
+
+  if (id) {
+    fetchTruckDetail();
+  } else {
+    setTruck(null);
+    setTransporter(null);
+    setLoading(false);
+  }
+}, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!truck) return <div>Truck not found</div>;
