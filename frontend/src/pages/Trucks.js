@@ -31,7 +31,8 @@ export default function Trucks() {
   const fetchTrucks = async () => {
     try {
       const response = await api.get('/trucks');
-      setTrucks(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setTrucks(data);
     } catch (error) {
       toast.error('Failed to load trucks');
     }
