@@ -14,19 +14,26 @@ export default function TransporterDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTransporterDetail();
-  }, [id]);
-
   const fetchTransporterDetail = async () => {
     try {
+      setLoading(true);
       const response = await api.get(`/transporters/${id}/detail`);
       setData(response.data);
     } catch (error) {
       toast.error('Failed to load transporter details');
+      setData(null);
     } finally {
       setLoading(false);
     }
   };
+
+  if (id) {
+    fetchTransporterDetail();
+  } else {
+    setData(null);
+    setLoading(false);
+  }
+}, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Transporter not found</div>;
