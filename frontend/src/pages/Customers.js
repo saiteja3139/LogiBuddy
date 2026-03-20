@@ -42,9 +42,10 @@ export default function Customers() {
 
   const fetchCustomers = async () => {
     try {
-      const response = await api.get('/customers');
-      setCustomers(response.data);
-      setFilteredCustomers(response.data);
+    const response = await api.get('/customers');
+    const data = Array.isArray(response.data) ? response.data : [];
+    setCustomers(data);
+    setFilteredCustomers(data);
     } catch (error) {
       toast.error('Failed to load customers');
     }
