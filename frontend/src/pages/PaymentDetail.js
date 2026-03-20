@@ -25,70 +25,76 @@ export default function PaymentDetail() {
   });
 
   useEffect(() => {
-    if (id) {
-      fetchPayment();
-      fetchAllocations();
-      fetchTrips();
-      fetchOrders();
-    }
-  }, [id]);
-
-  const fetchPayment = async () => {
+  const fetchPaymentDetailData = async () => {
     try {
-      const response = await api.get(`/payments/${id}`);
-      setPayment(response.data);
+      const [paymentRes, allocationsRes, tripsRes, ordersRes] = await Promise.all([
+        api.get(`/payments/${id}`),
+        api.get(`/payments/${id}/allocations`),
+        api.get('/trips'),
+        api.get('/orders')
+      ]);
+
+      setPayment(paymentRes.data);
+      setAllocations(allocationsRes.data);
+      setTrips(tripsRes.data);
+      setOrders(ordersRes.data);
     } catch (error) {
-      toast.error('Failed to load payment');
+      toast.error('Failed to load payment details');
+      setPayment(null);
+      setAllocations([]);
+      setTrips([]);
+      setOrders([]);
     }
   };
 
-  const fetchAllocations = async () => {
-    try {
-      const response = await api.get(`/payments/${id}/allocations`);
-      setAllocations(response.data);
-    } catch (error) {}
-  };
-
-  const fetchTrips = async () => {
-    try {
-      const response = await api.get('/trips');
-      setTrips(response.data);
-    } catch (error) {}
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const response = await api.get('/orders');
-      setOrders(response.data);
-    } catch (error) {}
-  };
+  if (id) {
+    fetchPaymentDetailData();
+  } else {
+    setPayment(null);
+    setAllocations([]);
+    setTrips([]);
+    setOrders([]);
+  }
+}, [id]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post(`/payments/${id}/allocations`, formData);
-      toast.success('Allocation added successfully');
-      setDialogOpen(false);
-      setFormData({ allocate_to_type: 'TRIP', allocate_to_id: '', allocated_amount: 0 });
-      fetchPayment();
-      fetchAllocations();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to add allocation');
-    }
-  };
+  e.preventDefault();
+  try {
+    await api.post(`/payments/${id}/allocations`, formData);
+    toast.success('Allocation added successfully');
+    setDialogOpen(false);
+    setFormData({ allocate_to_type: 'TRIP', allocate_to_id: '', allocated_amount: 0 });
+
+    const [paymentRes, allocationsRes] = await Promise.all([
+      api.get(`/payments/${id}`),
+      api.get(`/payments/${id}/allocations`)
+    ]);
+
+    setPayment(paymentRes.data);
+    setAllocations(allocationsRes.data);
+  } catch (error) {
+    toast.error(error.response?.data?.detail || 'Failed to add allocation');
+  }
+};
 
   const handleDeleteAllocation = async (allocationId) => {
-    if (window.confirm('Are you sure you want to delete this allocation?')) {
-      try {
-        await api.delete(`/allocations/${allocationId}`);
-        toast.success('Allocation deleted successfully');
-        fetchPayment();
-        fetchAllocations();
-      } catch (error) {
-        toast.error('Failed to delete allocation');
-      }
+  if (window.confirm('Are you sure you want to delete this allocation?')) {
+    try {
+      await api.delete(`/allocations/${allocationId}`);
+      toast.success('Allocation deleted successfully');
+
+      const [paymentRes, allocationsRes] = await Promise.all([
+        api.get(`/payments/${id}`),
+        api.get(`/payments/${id}/allocations`)
+      ]);
+
+      setPayment(paymentRes.data);
+      setAllocations(allocationsRes.data);
+    } catch (error) {
+      toast.error('Failed to delete allocation');
     }
-  };
+  }
+};
 
   const getTripLabel = (tripId) => {
     const trip = trips.find(t => t.id === tripId);
