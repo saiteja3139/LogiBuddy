@@ -21,11 +21,7 @@ export default function Drivers() {
     license_expiry_date: '', address: '', notes: ''
   });
 
-  useEffect(() => {
-    fetchDrivers();
-    fetchTransporters();
-  }, []);
-
+useEffect(() => {
   const fetchDrivers = async () => {
     try {
       const response = await api.get('/drivers', { params: { search } });
@@ -41,6 +37,10 @@ export default function Drivers() {
       setTransporters(response.data);
     } catch (error) {}
   };
+
+  fetchDrivers();
+  fetchTransporters();
+}, [search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
