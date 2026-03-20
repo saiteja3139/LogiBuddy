@@ -48,7 +48,7 @@ export default function Trips() {
   const fetchTrips = async () => {
     try {
       const response = await api.get('/trips');
-      setTrips(response.data);
+      setTrips(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       toast.error('Failed to load trips');
     }
@@ -57,21 +57,21 @@ export default function Trips() {
   const fetchOrders = async () => {
     try {
       const response = await api.get('/orders');
-      setOrders(response.data);
+      setOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {}
   };
 
   const fetchTransporters = async () => {
     try {
       const response = await api.get('/transporters');
-      setTransporters(response.data);
+      setTransporters(Array.isArray(response.data) ? response.data : []);
     } catch (error) {}
   };
 
   const fetchTrucks = async () => {
     try {
       const response = await api.get('/trucks');
-      setTrucks(response.data);
+      setTrucks(Array.isArray(response.data) ? response.data : []);
     } catch (error) {}
   };
 
