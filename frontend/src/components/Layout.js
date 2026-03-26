@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Truck, Package, Route, CreditCard, 
-  FileText, Menu, X, User
+  FileText, Menu, X, User, UserCog
 } from 'lucide-react';
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Transporters', href: '/transporters', icon: Truck },
   { name: 'Trucks', href: '/trucks', icon: Truck },
+  { name: 'Drivers', href: '/drivers', icon: UserCog },
   { name: 'Orders', href: '/orders', icon: Package },
   { name: 'Trips', href: '/trips', icon: Route },
   { name: 'Payments', href: '/payments', icon: CreditCard },
@@ -32,7 +33,7 @@ export default function Layout({ children }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 sm:w-64 bg-primary transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

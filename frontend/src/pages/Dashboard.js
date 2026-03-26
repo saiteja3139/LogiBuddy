@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatDate } from '../lib/utils';
 import { IndianRupee, TrendingUp, TrendingDown, Package, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+  const [expiringDocs, setExpiringDocs] = useState({ expiring_soon: [], expired: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboard();
+    fetchExpiringDocuments();
   }, []);
 
   const fetchDashboard = async () => {
@@ -25,21 +27,33 @@ export default function Dashboard() {
     }
   };
 
+  const fetchExpiringDocuments = async () => {
+    try {
+      const response = await api.get('/documents/expiring/soon?days=30');
+      setExpiringDocs({
+        expiring_soon: response.data?.expiring_soon ?? [],
+        expired: response.data?.expired ?? [],
+      });
+    } catch (error) {
+      console.error('Failed to load expiring documents');
+    }
+  };
+
   if (loading) {
     return <div data-testid="dashboard-loading">Loading dashboard...</div>;
   }
 
   return (
-    <div className="space-y-8" data-testid="dashboard">
+    <div className="space-y-6 md:space-y-8" data-testid="dashboard">
       <div>
-        <h1 className="text-4xl font-bold text-foreground font-heading">Dashboard</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground font-heading">Dashboard</h1>
         <p className="text-muted-foreground mt-2">Your logistics overview at a glance</p>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+      {/* Metrics Grid - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Outstanding Receivables */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="receivables-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="receivables-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Receivables
@@ -55,7 +69,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Outstanding Payables */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="payables-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="payables-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Payables
@@ -71,7 +85,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Pending Orders */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="pending-orders-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="pending-orders-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Pending Orders
@@ -87,7 +101,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Overdue Customers */}
-        <Card className="md:col-span-3 hover:shadow-md transition-all duration-200" data-testid="overdue-card">
+        <Card className="hover:shadow-md transition-all duration-200" data-testid="overdue-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Overdue
@@ -102,6 +116,46 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Expiring Documents Alert */}
+      {(expiringDocs.expiring_soon.length > 0 || expiringDocs.expired.length > 0) && (
+        <Card className="border-warning">
+          <CardHeader>
+            <CardTitle className="text-warning flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Document Alerts</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {expiringDocs.expired.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-error mb-2">Expired Documents ({expiringDocs.expired.length})</h3>
+                <div className="space-y-2">
+                  {expiringDocs.expired.slice(0, 3).map(doc => (
+                    <div key={doc.id} className="text-sm flex justify-between items-center p-2 bg-error/5 rounded-sm">
+                      <span>{doc.title} - {doc.entity_type}</span>
+                      <span className="text-xs text-error">{formatDate(doc.expiry_date)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {expiringDocs.expiring_soon.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-warning mb-2">Expiring Soon ({expiringDocs.expiring_soon.length})</h3>
+                <div className="space-y-2">
+                  {expiringDocs.expiring_soon.slice(0, 3).map(doc => (
+                    <div key={doc.id} className="text-sm flex justify-between items-center p-2 bg-warning/5 rounded-sm">
+                      <span>{doc.title} - {doc.entity_type}</span>
+                      <span className="text-xs text-warning">{formatDate(doc.expiry_date)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

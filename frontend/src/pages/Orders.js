@@ -7,13 +7,14 @@ import { Input } from '../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [formData, setFormData] = useState({
     customer_id: '',
     origin: '',
@@ -34,7 +35,8 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       const response = await api.get('/orders');
-      setOrders(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setOrders(data);
     } catch (error) {
       toast.error('Failed to load orders');
     }
@@ -43,7 +45,7 @@ export default function Orders() {
   const fetchCustomers = async () => {
     try {
       const response = await api.get('/customers');
-      setCustomers(response.data);
+      setCustomers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       toast.error('Failed to load customers');
     }
@@ -52,9 +54,15 @@ export default function Orders() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/orders', formData);
-      toast.success('Order created successfully');
+      if (editingOrder) {
+        await api.put(`/orders/${editingOrder.id}`, formData);
+        toast.success('Order updated successfully');
+      } else {
+        await api.post('/orders', formData);
+        toast.success('Order created successfully');
+      }
       setDialogOpen(false);
+      setEditingOrder(null);
       setFormData({
         customer_id: '', origin: '', destination: '', material: '',
         total_qty_mt: 0, rate_type: 'PER_MT', customer_rate_value: 0,
@@ -62,7 +70,25 @@ export default function Orders() {
       });
       fetchOrders();
     } catch (error) {
-      toast.error('Failed to create order');
+      toast.error(editingOrder ? 'Failed to update order' : 'Failed to create order');
+    }
+  };
+
+  const handleEdit = (order) => {
+    setEditingOrder(order);
+    setFormData(order);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this order?')) {
+      try {
+        await api.delete(`/orders/${id}`);
+        toast.success('Order deleted successfully');
+        fetchOrders();
+      } catch (error) {
+        toast.error('Failed to delete order');
+      }
     }
   };
 
@@ -73,7 +99,17 @@ export default function Orders() {
           <h1 className="text-4xl font-bold font-heading">Orders</h1>
           <p className="text-muted-foreground mt-2">Manage customer orders</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingOrder(null);
+            setFormData({
+              customer_id: '', origin: '', destination: '', material: '',
+              total_qty_mt: 0, rate_type: 'PER_MT', customer_rate_value: 0,
+              order_date: new Date().toISOString().split('T')[0], status: 'DRAFT'
+            });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="add-order-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -82,7 +118,7 @@ export default function Orders() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Order</DialogTitle>
+              <DialogTitle>{editingOrder ? 'Edit Order' : 'Add New Order'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -151,7 +187,7 @@ export default function Orders() {
                   </Select>
                 </div>
               </div>
-              <Button type="submit" className="w-full">Create Order</Button>
+              <Button type="submit" className="w-full">{editingOrder ? 'Update Order' : 'Create Order'}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -193,6 +229,12 @@ export default function Orders() {
                   <Link to={`/orders/${order.id}`}>
                     <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
                   </Link>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(order)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(order.id)}>
+                    <Trash2 className="w-4 h-4 text-error" />
+                  </Button>
                 </td>
               </tr>
             ))}

@@ -45,7 +45,7 @@ INSERT INTO user_roles (user_id, role) VALUES ('YOUR_USER_ID', 'ADMIN');
 
 ### 4. Login to Application
 
-1. Open https://freight-mvp-1.preview.emergentagent.com/login
+1. Open https://cargo-connect-267.preview.emergentagent.com/login
 2. Use the email and password you created in Supabase
 3. Click "Sign in"
 

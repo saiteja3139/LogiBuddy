@@ -12,20 +12,24 @@ export default function CustomerDetail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCustomerDetail();
-  }, [id]);
+useEffect(() => {
+    const fetchCustomerDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/customers/${id}/detail`);
+        setData(response.data);
+      } catch (error) {
+        toast.error('Failed to load customer details');
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchCustomerDetail = async () => {
-    try {
-      const response = await api.get(`/customers/${id}/detail`);
-      setData(response.data);
-    } catch (error) {
-      toast.error('Failed to load customer details');
-    } finally {
-      setLoading(false);
+    if (id) {
+      fetchCustomerDetail();
     }
-  };
+  }, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Customer not found</div>;
@@ -33,21 +37,21 @@ export default function CustomerDetail() {
   const { customer, orders, total_billed, total_received, outstanding, aging_buckets } = data;
 
   return (
-    <div className="space-y-6" data-testid="customer-detail-page">
-      <div className="flex items-center space-x-4">
+    <div className="space-y-4 md:space-y-6" data-testid="customer-detail-page">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
         <Link to="/customers">
           <Button variant="outline" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
         </Link>
-        <div>
-          <h1 className="text-4xl font-bold font-heading">{customer.name}</h1>
+        <div className="flex-1">
+          <h1 className="text-3xl sm:text-4xl font-bold font-heading">{customer.name}</h1>
           <p className="text-muted-foreground mt-1">{customer.phone}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Total Billed</CardTitle>
@@ -87,7 +91,7 @@ export default function CustomerDetail() {
           <CardTitle>Aging Analysis</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <div className="text-xs text-muted-foreground">0-7 days</div>
               <div className="text-lg font-bold">{formatCurrency(aging_buckets['0-7'])}</div>

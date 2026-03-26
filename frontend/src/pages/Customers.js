@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Customers() {
@@ -13,6 +13,7 @@ export default function Customers() {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -41,9 +42,10 @@ export default function Customers() {
 
   const fetchCustomers = async () => {
     try {
-      const response = await api.get('/customers');
-      setCustomers(response.data);
-      setFilteredCustomers(response.data);
+    const response = await api.get('/customers');
+    const data = Array.isArray(response.data) ? response.data : [];
+    setCustomers(data);
+    setFilteredCustomers(data);
     } catch (error) {
       toast.error('Failed to load customers');
     }
@@ -52,24 +54,54 @@ export default function Customers() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/customers', formData);
-      toast.success('Customer created successfully');
+      if (editingCustomer) {
+        await api.put(`/customers/${editingCustomer.id}`, formData);
+        toast.success('Customer updated successfully');
+      } else {
+        await api.post('/customers', formData);
+        toast.success('Customer created successfully');
+      }
       setDialogOpen(false);
+      setEditingCustomer(null);
       setFormData({ name: '', phone: '', email: '', address: '', gstin: '', payment_terms_days: 0, notes: '' });
       fetchCustomers();
     } catch (error) {
-      toast.error('Failed to create customer');
+      toast.error(editingCustomer ? 'Failed to update customer' : 'Failed to create customer');
+    }
+  };
+
+  const handleEdit = (customer) => {
+    setEditingCustomer(customer);
+    setFormData(customer);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      try {
+        await api.delete(`/customers/${id}`);
+        toast.success('Customer deleted successfully');
+        fetchCustomers();
+      } catch (error) {
+        toast.error('Failed to delete customer');
+      }
     }
   };
 
   return (
-    <div className="space-y-6" data-testid="customers-page">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 md:space-y-6" data-testid="customers-page">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-foreground font-heading">Customers</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground font-heading">Customers</h1>
           <p className="text-muted-foreground mt-2">Manage your customer database</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingCustomer(null);
+            setFormData({ name: '', phone: '', email: '', address: '', gstin: '', payment_terms_days: 0, notes: '' });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="add-customer-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -78,7 +110,7 @@ export default function Customers() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -145,14 +177,14 @@ export default function Customers() {
                   />
                 </div>
               </div>
-              <Button type="submit" data-testid="customer-submit-btn" className="w-full">Create Customer</Button>
+              <Button type="submit" data-testid="customer-submit-btn" className="w-full">{editingCustomer ? 'Update Customer' : 'Create Customer'}</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
       <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Search by name or phone..."
@@ -164,7 +196,8 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="bg-white border border-border shadow-sm rounded-sm overflow-hidden">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white border border-border shadow-sm rounded-sm overflow-hidden">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted/50">
             <tr>
@@ -190,11 +223,61 @@ export default function Customers() {
                       <Eye className="w-4 h-4" />
                     </Button>
                   </Link>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(customer)} data-testid="edit-customer-btn">
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)} data-testid="delete-customer-btn">
+                    <Trash2 className="w-4 h-4 text-error" />
+                  </Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {filteredCustomers.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">No customers found</div>
+        )}
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {filteredCustomers.map((customer) => (
+          <div key={customer.id} className="bg-white border rounded-sm p-4 shadow-sm" data-testid="customer-card">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="font-medium text-base">{customer.name}</h3>
+                <p className="text-sm text-muted-foreground">{customer.phone}</p>
+              </div>
+              <div className="flex space-x-1">
+                <Link to={`/customers/${customer.id}`}>
+                  <Button variant="ghost" size="sm" className="touch-target">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(customer)} className="touch-target">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)} className="touch-target">
+                  <Trash2 className="w-4 h-4 text-error" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-muted-foreground">Email:</span>
+                <p className="truncate">{customer.email || '-'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">GSTIN:</span>
+                <p className="truncate">{customer.gstin || '-'}</p>
+              </div>
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Payment Terms:</span>
+                <p>{customer.payment_terms_days} days</p>
+              </div>
+            </div>
+          </div>
+        ))}
         {filteredCustomers.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">No customers found</div>
         )}

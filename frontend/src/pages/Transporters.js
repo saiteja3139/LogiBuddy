@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Transporters() {
@@ -13,6 +13,7 @@ export default function Transporters() {
   const [filteredTransporters, setFilteredTransporters] = useState([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTransporter, setEditingTransporter] = useState(null);
   const [formData, setFormData] = useState({
     name: '', phone: '', address: '', gstin: '', pan: '',
     bank_account_name: '', bank_account_number: '', ifsc: '', bank_name: ''
@@ -36,8 +37,9 @@ export default function Transporters() {
   const fetchTransporters = async () => {
     try {
       const response = await api.get('/transporters');
-      setTransporters(response.data);
-      setFilteredTransporters(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setTransporters(data);
+      setFilteredTransporters(data);
     } catch (error) {
       toast.error('Failed to load transporters');
     }
@@ -46,13 +48,37 @@ export default function Transporters() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/transporters', formData);
-      toast.success('Transporter created successfully');
+      if (editingTransporter) {
+        await api.put(`/transporters/${editingTransporter.id}`, formData);
+        toast.success('Transporter updated successfully');
+      } else {
+        await api.post('/transporters', formData);
+        toast.success('Transporter created successfully');
+      }
       setDialogOpen(false);
+      setEditingTransporter(null);
       setFormData({ name: '', phone: '', address: '', gstin: '', pan: '', bank_account_name: '', bank_account_number: '', ifsc: '', bank_name: '' });
       fetchTransporters();
     } catch (error) {
-      toast.error('Failed to create transporter');
+      toast.error(editingTransporter ? 'Failed to update transporter' : 'Failed to create transporter');
+    }
+  };
+
+  const handleEdit = (transporter) => {
+    setEditingTransporter(transporter);
+    setFormData(transporter);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this transporter?')) {
+      try {
+        await api.delete(`/transporters/${id}`);
+        toast.success('Transporter deleted successfully');
+        fetchTransporters();
+      } catch (error) {
+        toast.error('Failed to delete transporter');
+      }
     }
   };
 
@@ -63,7 +89,13 @@ export default function Transporters() {
           <h1 className="text-4xl font-bold font-heading">Transporters</h1>
           <p className="text-muted-foreground mt-2">Manage your transporter network</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingTransporter(null);
+            setFormData({ name: '', phone: '', address: '', gstin: '', pan: '', bank_account_name: '', bank_account_number: '', ifsc: '', bank_name: '' });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="add-transporter-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -72,7 +104,7 @@ export default function Transporters() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Transporter</DialogTitle>
+              <DialogTitle>{editingTransporter ? 'Edit Transporter' : 'Add New Transporter'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -113,7 +145,7 @@ export default function Transporters() {
                   <Input value={formData.bank_name} onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })} />
                 </div>
               </div>
-              <Button type="submit" className="w-full">Create Transporter</Button>
+              <Button type="submit" className="w-full">{editingTransporter ? 'Update Transporter' : 'Create Transporter'}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -144,6 +176,12 @@ export default function Transporters() {
                   <Link to={`/transporters/${t.id}`}>
                     <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
                   </Link>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(t)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)}>
+                    <Trash2 className="w-4 h-4 text-error" />
+                  </Button>
                 </td>
               </tr>
             ))}
